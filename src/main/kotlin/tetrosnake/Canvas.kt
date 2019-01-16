@@ -1,5 +1,7 @@
-package snake
+package tetrosnake
 
+import util.Util.getRoundX10
+import util.Util.getRoundY10
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -12,7 +14,7 @@ import javax.swing.Timer
 
 /**
  ** Created with passion and love
- **    for project Snake
+ **    for project TetroSnake
  **        by Jatzuk on 17-Jan-19
  **                                            *_____*
  **                                           *_*****_*
@@ -40,9 +42,9 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private fun initGame() {
-        snake.body.add(Point(400 + POINT_SIZE, 200))
-        snake.body.add(Point(410 + POINT_SIZE, 200))
-        snake.body.add(Point(420 + POINT_SIZE, 200))
+        snake.body.add(Point(400 + POINT_SIZE_BLOCK, 200))
+        snake.body.add(Point(410 + POINT_SIZE_BLOCK, 200))
+        snake.body.add(Point(420 + POINT_SIZE_BLOCK, 200))
         createFood()
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent?) {
@@ -66,8 +68,8 @@ class Canvas : JPanel(), ActionListener {
 
     private fun render(g: Graphics2D) {
         if (isAlive) {
-            if (checkCollisionAtSelf() || checkCollisionAtObstaclesViaHead()) gameEnd()
-            if (checkCollisionAtPointViaHead(food)) {
+            if (!isFalling && (checkCollisionAtSelf() || checkCollisionAtObstaclesViaHead())) gameEnd()
+            if (!isFalling && checkCollisionAtPointViaHead(food)) {
                 val point = Point()
                 with(snake.body[snake.body.size - 1]) {
                     point.x = this.x
@@ -75,24 +77,23 @@ class Canvas : JPanel(), ActionListener {
                 }
                 createFood()
                 snake.body.add(point)
-                if (timer.delay > 1) timer.delay -= 20
+                if (timer.delay > 1) timer.delay -= 1
             }
             g.color = Color.YELLOW
-            g.fillRect(snake.body[0].x, snake.body[0].y, POINT_SIZE, POINT_SIZE)
+            g.fillRect(snake.body[0].x, snake.body[0].y, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
             g.color = Color.WHITE
-            for (i in 1 until snake.body.size) g.fillRect(snake.body[i].x, snake.body[i].y, POINT_SIZE, POINT_SIZE)
+            for (i in 1 until snake.body.size) g.fillRect(snake.body[i].x, snake.body[i].y, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
             g.color = Color.GREEN
-            g.fillRect(food.x, food.y, POINT_SIZE, POINT_SIZE)
+            g.fillRect(food.x, food.y, POINT_SIZE_BLOCK, POINT_SIZE_BLOCK)
 
             if (obstacles.isNotEmpty()) {
-                println("obstales size: ${obstacles.size}")
                 g.color = Color.RED
                 for (i in 0 until obstacles.size) {
-                    for (j in 0 until WALL_SIZE) g.fillRect(obstacles[i].wall[j]!!.x, obstacles[i].wall[j]!!.y, POINT_SIZE, POINT_SIZE)
+                    for (j in 0 until obstacles[i].wall.size) g.fillRect(obstacles[i].wall[j]!!.x, obstacles[i].wall[j]!!.y, POINT_SIZE_BLOCK, POINT_SIZE_BLOCK)
                 }
             }
         }
-        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | food  collected: ${snake.body.size - 3}"
+        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | score: ${snake.body.size - 3} food x: ${food.x},y: ${food.y} snake's head - x: ${snake.body[0].x}, y: ${snake.body[0].y}"
     }
 
     private fun gameEnd() {
@@ -109,30 +110,21 @@ class Canvas : JPanel(), ActionListener {
         isFalling = true
     }
 
-    private fun fixPosition() {
-        isFalling = false
-        for (i in 0 until snake.body.size step 3) {
-            val point = Point(snake.body[i])
-            val point2 = Point(snake.body[i + 1])
-            val point3 = Point(snake.body[i + 2])
-            val obstacle = Obstacle()
-            with(obstacle) {
-                wall[0] = point
-                wall[1] = point2
-                wall[2] = point3
-            }
-            obstacles.add(obstacle)
-        }
+    private fun createObstacleFromSnake() {
+        val obstacle = Obstacle(snake.body.size)
+        for (i in 0 until snake.body.size) obstacle.wall[i] = snake.body[i]
+        obstacles.add(obstacle)
 
         snake = Snake()
-        snake.body.add(Point(400 + POINT_SIZE, 200))
-        snake.body.add(Point(410 + POINT_SIZE, 200))
-        snake.body.add(Point(420 + POINT_SIZE, 200))
+        snake.body.add(Point(400 + POINT_SIZE_BLOCK, 200))
+        snake.body.add(Point(410 + POINT_SIZE_BLOCK, 200))
+        snake.body.add(Point(420 + POINT_SIZE_BLOCK, 200))
+        isFalling = false
     }
 
     private fun checkCollisionAtPointViaHead(item: Point) =
-            snake.body[0].x in item.x - POINT_SIZE..item.x + POINT_SIZE &&
-                    snake.body[0].y in item.y - POINT_SIZE..item.y + POINT_SIZE
+            snake.body[0].x in item.x - POINT_SIZE_BLOCK + 1 until item.x + POINT_SIZE_BLOCK - 1 &&
+                    snake.body[0].y in item.y - POINT_SIZE_BLOCK + 1 until item.y + POINT_SIZE_BLOCK - 1
 
     private fun checkCollisionAtSelf(): Boolean {
         for (i in 1 until snake.body.size) if (snake.body[0] == snake.body[i]) return true
@@ -141,23 +133,23 @@ class Canvas : JPanel(), ActionListener {
 
     private fun checkCollisionAtObstaclesViaHead(): Boolean {
         for (obstacle in obstacles) {
-            for (i in 0 until WALL_SIZE) if (checkCollisionAtPointViaHead(Point(obstacle.wall[i]!!.x, obstacle.wall[i]!!.y))) return true
+            for (i in 0 until obstacle.wall.size) if (checkCollisionAtPointViaHead(Point(obstacle.wall[i]!!.x, obstacle.wall[i]!!.y))) return true
         }
         return false
     }
 
     private fun checkCollisionAtObstacles(): Boolean {
-        for (sp in snake.body) {
-            for ((i, obstacle) in obstacles.withIndex()) {
-                if (sp.location == obstacle.wall[i]!!.location) return true
-            }
+        println("all obstacles size: ${obstacles.size}")
+        for (i in 0 until obstacles.size) {
+            println("obstacle $i")
+            for (j in 0 until snake.body.size) if (snake.body[j] == obstacles[i].wall) return true
         }
         return false
     }
 
     private fun createFood() {
-        food.x = (Math.random() * WIDTH).toInt() + 1 - POINT_SIZE
-        food.y = (Math.random() * HEIGHT).toInt() + 1 - POINT_SIZE
+        food.x = getRoundX10()
+        food.y = getRoundY10()
     }
 
     override fun actionPerformed(e: ActionEvent?) {
@@ -168,10 +160,10 @@ class Canvas : JPanel(), ActionListener {
             }
 
             when (snake.direction) {
-                Direction.UP -> snake.body[0].y -= POINT_SIZE + 1
-                Direction.RIGHT -> snake.body[0].x += POINT_SIZE + 1
-                Direction.DOWN -> snake.body[0].y += POINT_SIZE + 1
-                Direction.LEFT -> snake.body[0].x -= POINT_SIZE + 1
+                Direction.UP -> snake.body[0].y -= POINT_SIZE_BLOCK
+                Direction.RIGHT -> snake.body[0].x += POINT_SIZE_BLOCK
+                Direction.DOWN -> snake.body[0].y += POINT_SIZE_BLOCK
+                Direction.LEFT -> snake.body[0].x -= POINT_SIZE_BLOCK
             }
 
             when {
@@ -181,20 +173,23 @@ class Canvas : JPanel(), ActionListener {
                 snake.body[0].x < 0 -> snake.body[0].x = WIDTH
             }
         } else {
-            for (i in 0 until snake.body.size) snake.body[i].y += POINT_SIZE
+            for (i in 0 until snake.body.size) snake.body[i].y += POINT_SIZE_BLOCK
             val max = snake.body.maxBy { it.y }!!
-            if (max.y > HEIGHT - WALL_SIZE || checkCollisionAtObstacles()) fixPosition()
+            if (checkCollisionAtObstacles() || (max.y > HEIGHT - POINT_SIZE_BLOCK)) createObstacleFromSnake()
         }
 
         repaint()
     }
 
+
     companion object {
+        private const val OBSTACLE_CREATOR_DELAY_TIME = 10_000L
         private const val DELAY = 150
-        private const val WIDTH = 500
-        private const val HEIGHT = 300
-        private const val POINT_SIZE = 10
         private const val WALL_SIZE = 3
+        const val WIDTH = 500
+        const val HEIGHT = 300
+        const val POINT_SIZE_BLOCK = 10
+        const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
     }
 
     private inner class Snake {
@@ -205,27 +200,26 @@ class Canvas : JPanel(), ActionListener {
     private inner class ObstacleCreator : Thread() {
         override fun run() {
             while (isAlive) {
-                Thread.sleep(10_000)
-                obstacles.add(Obstacle())
+                Thread.sleep(OBSTACLE_CREATOR_DELAY_TIME)
+                obstacles.add(Obstacle(WALL_SIZE))
             }
         }
     }
 
-    private inner class Obstacle {
-        val wall = arrayOfNulls<Point>(WALL_SIZE)
+    private inner class Obstacle(size: Int) {
+        val wall = arrayOfNulls<Point>(size)
 
         init {
-            val x = (Math.random() * WIDTH - POINT_SIZE).toInt() + 1
-            val y = (Math.random() * HEIGHT - POINT_SIZE).toInt() + 1
-            val anchor = Point(x, y)
+            val anchor = Point(getRoundX10(), getRoundY10())
             if (Random().nextBoolean()) {
-                for (i in 0 until WALL_SIZE) {
-                    anchor.x += POINT_SIZE
+                for (i in 0 until size) {
+                    anchor.x += POINT_SIZE_BLOCK + 1
+//                    TODO("ugly spaces")
                     wall[i] = Point(anchor.x, anchor.y)
                 }
             } else {
-                for (i in 0 until WALL_SIZE) {
-                    anchor.y += POINT_SIZE
+                for (i in 0 until size) {
+                    anchor.y += POINT_SIZE_BLOCK + 1
                     wall[i] = Point(anchor.x, anchor.y)
                 }
             }

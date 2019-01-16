@@ -1,4 +1,4 @@
-package snake
+package tetrosnake
 
 import java.awt.EventQueue
 import javax.swing.JFrame
@@ -6,7 +6,7 @@ import javax.swing.WindowConstants
 
 /**
  ** Created with passion and love
- **    for project Snake
+ **    for project TetroSnake
  **        by Jatzuk on 17-Jan-19
  **                                            *_____*
  **                                           *_*****_*
@@ -21,12 +21,10 @@ import javax.swing.WindowConstants
 object Frame : JFrame() {
     init {
         contentPane = Canvas()
-        setLocationRelativeTo(null)
-        title = "Snake"
+        pack()
         isResizable = false
         setLocationRelativeTo(null)
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
-        pack()
     }
 }
 
