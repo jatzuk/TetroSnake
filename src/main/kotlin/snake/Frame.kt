@@ -7,7 +7,7 @@ import javax.swing.WindowConstants
 /**
  ** Created with passion and love
  **    for project Snake
- **        by Jatzuk on 16-Jan-19
+ **        by Jatzuk on 17-Jan-19
  **                                            *_____*
  **                                           *_*****_*
  **                                          *_(O)_(O)_*
