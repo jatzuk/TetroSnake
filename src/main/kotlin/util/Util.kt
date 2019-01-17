@@ -28,4 +28,10 @@ object Util {
         if (y % 5 != 0) y = Math.round((y + 6) / Canvas.POINT_SIZE_BLOCK.toDouble()).toInt() * Canvas.POINT_SIZE_BLOCK + Canvas.POINT_SIZE_BLOCK
         return y
     }
+
+    fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
+
+    enum class Direction {
+        UP, RIGHT, DOWN, LEFT;
+    }
 }

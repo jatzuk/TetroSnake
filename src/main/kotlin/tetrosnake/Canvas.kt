@@ -2,6 +2,7 @@ package tetrosnake
 
 import util.Util.getRoundX10
 import util.Util.getRoundY10
+import util.Util.Direction
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -30,9 +31,11 @@ class Canvas : JPanel(), ActionListener {
     private val timer = Timer(DELAY, this)
     private val food = Point()
     private val obstacles = arrayListOf<Obstacle>()
-    private var snake = Snake()
+    private lateinit var snake: Snake
     private var isAlive = true
     private var isFalling = false
+    private var canRestart = true
+    private var isPause = false
 
     init {
         background = Color.BLACK
@@ -42,9 +45,7 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private fun initGame() {
-        snake.body.add(Point(400 + POINT_SIZE_BLOCK, 200))
-        snake.body.add(Point(410 + POINT_SIZE_BLOCK, 200))
-        snake.body.add(Point(420 + POINT_SIZE_BLOCK, 200))
+        createSnake()
         createFood()
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent?) {
@@ -53,12 +54,23 @@ class Canvas : JPanel(), ActionListener {
                     KeyEvent.VK_RIGHT -> if (snake.direction != Direction.LEFT) snake.direction = Direction.RIGHT
                     KeyEvent.VK_DOWN -> if (snake.direction != Direction.UP) snake.direction = Direction.DOWN
                     KeyEvent.VK_LEFT -> if (snake.direction != Direction.RIGHT) snake.direction = Direction.LEFT
-                    KeyEvent.VK_SPACE -> if (!isFalling) fallDown()
+                    KeyEvent.VK_SPACE -> if (!isFalling) isFalling = true
+                    KeyEvent.VK_R -> if (!isAlive && canRestart) restart()
+                    KeyEvent.VK_P -> if (!isPause) pause() else unPause()
                 }
             }
         })
         timer.start()
         ObstacleCreator().start()
+    }
+
+    private fun createSnake() {
+        snake = Snake()
+        with(snake.body) {
+            add(Point(400 + POINT_SIZE_BLOCK, 200))
+            add(Point(410 + POINT_SIZE_BLOCK, 200))
+            add(Point(420 + POINT_SIZE_BLOCK, 200))
+        }
     }
 
     override fun paintComponent(g: Graphics?) {
@@ -93,7 +105,7 @@ class Canvas : JPanel(), ActionListener {
                 }
             }
         }
-        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | score: ${snake.body.size - 3} food x: ${food.x},y: ${food.y} snake's head - x: ${snake.body[0].x}, y: ${snake.body[0].y}"
+        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | score: ${snake.body.size - 3} food x: ${food.x},y: ${food.y} head - x: ${snake.body[0].x}, y: ${snake.body[0].y}"
     }
 
     private fun gameEnd() {
@@ -104,21 +116,25 @@ class Canvas : JPanel(), ActionListener {
     private fun restart() {
         initGame()
         isAlive = true
+        isFalling = false
+        canRestart = false
     }
 
-    private fun fallDown() {
-        isFalling = true
+    private fun pause() {
+        isPause = true
+        timer.stop()
+    }
+
+    private fun unPause() {
+        isPause = false
+        timer.restart()
     }
 
     private fun createObstacleFromSnake() {
         val obstacle = Obstacle(snake.body.size)
         for (i in 0 until snake.body.size) obstacle.wall[i] = snake.body[i]
         obstacles.add(obstacle)
-
-        snake = Snake()
-        snake.body.add(Point(400 + POINT_SIZE_BLOCK, 200))
-        snake.body.add(Point(410 + POINT_SIZE_BLOCK, 200))
-        snake.body.add(Point(420 + POINT_SIZE_BLOCK, 200))
+        createSnake()
         isFalling = false
     }
 
@@ -140,10 +156,33 @@ class Canvas : JPanel(), ActionListener {
 
     private fun checkCollisionAtObstacles(): Boolean {
         println("all obstacles size: ${obstacles.size}")
+
+//        TODO("optimization ??")
+//        val topBound = snake.body.maxBy { it.y }!!.y
+//        val relativeObstacles = mutableListOf<Point>()
+//        for (obstacle in obstacles) {
+//            for (i in 0 until obstacle.wall.size) {
+//                if (obstacle.wall[i]!!.y < topBound) relativeObstacles.add(obstacle.wall[i]!!)
+//            }
+//        }
+
         for (i in 0 until obstacles.size) {
-            println("obstacle $i")
-            for (j in 0 until snake.body.size) if (snake.body[j] == obstacles[i].wall) return true
+            for (j in 0 until obstacles[i].wall.size) {
+                for (k in 0 until snake.body.size) {
+                    val ox = obstacles[i].wall[j]!!.x
+                    val oy = obstacles[i].wall[j]!!.y
+                    val sx = snake.body[k].x
+                    val sy = snake.body[k].y
+                    println("$sx in ${ox - POINT_SIZE_BLOCK} < ${ox + POINT_SIZE_BLOCK}, $sy in ${oy - POINT_SIZE_BLOCK} < ${oy + POINT_SIZE_BLOCK}")
+//                    TODO("without 1 '-1' works perfectly")
+                    if (sx in ox - POINT_SIZE_BLOCK + 1 until ox + POINT_SIZE_BLOCK - 1 && sy in oy - POINT_SIZE_BLOCK until oy + POINT_SIZE_BLOCK - 1) {
+                        println("\tCollision at: $sx in ${ox - POINT_SIZE_BLOCK} < ${ox + POINT_SIZE_BLOCK}, $sy in ${oy - POINT_SIZE_BLOCK} < ${oy + POINT_SIZE_BLOCK}")
+                        return true
+                    }
+                }
+            }
         }
+
         return false
     }
 
@@ -181,10 +220,9 @@ class Canvas : JPanel(), ActionListener {
         repaint()
     }
 
-
     companion object {
         private const val OBSTACLE_CREATOR_DELAY_TIME = 10_000L
-        private const val DELAY = 150
+        private const val DELAY = 140
         private const val WALL_SIZE = 3
         const val WIDTH = 500
         const val HEIGHT = 300
@@ -194,14 +232,15 @@ class Canvas : JPanel(), ActionListener {
 
     private inner class Snake {
         val body = ArrayList<Point>()
-        var direction = Direction.LEFT
+        //        TODO("self killing in right case")
+        var direction = /*randomDirection()*/ Direction.LEFT
     }
 
     private inner class ObstacleCreator : Thread() {
         override fun run() {
-            while (isAlive) {
+            while (isAlive && !isPause) {
                 Thread.sleep(OBSTACLE_CREATOR_DELAY_TIME)
-                obstacles.add(Obstacle(WALL_SIZE))
+//                obstacles.add(Obstacle(WALL_SIZE))
             }
         }
     }
@@ -224,9 +263,5 @@ class Canvas : JPanel(), ActionListener {
                 }
             }
         }
-    }
-
-    private enum class Direction {
-        UP, RIGHT, DOWN, LEFT
     }
 }
