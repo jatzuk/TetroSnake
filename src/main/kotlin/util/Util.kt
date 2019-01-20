@@ -23,9 +23,7 @@ import java.util.ArrayList
 
 object Util {
     interface GameObject {
-//        val body: ArrayList<Point>
-        val blockSize: Int
-        val first: Point
+        val body: ArrayList<Point>
     }
 
 
@@ -35,7 +33,7 @@ object Util {
 //        return x
 //    }
 
-    fun getRandomX(posix: Int = 0) = (Math.random() * (WIDTH / POINT_SIZE_BLOCK - posix)).toInt()
+    fun randomX(posix: Int = 0) = (Math.random() * (WIDTH / POINT_SIZE_BLOCK - posix)).toInt()
 
 //    fun getRoundY10(): Int {
 //        var y = (Math.random() * HEIGHT / POINT_SIZE_BLOCK - POINT_SIZE_BLOCK).toInt() - POINT_SIZE_BLOCK
@@ -43,7 +41,7 @@ object Util {
 //        return y
 //    }
 
-    fun getRandomY(posix: Int = 0) = (Math.random() * (HEIGHT / POINT_SIZE_BLOCK - posix)).toInt()
+    fun randomY(posix: Int = 0) = (Math.random() * (HEIGHT / POINT_SIZE_BLOCK - posix)).toInt()
 
     fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
 
