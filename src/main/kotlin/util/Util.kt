@@ -9,7 +9,7 @@ import java.util.ArrayList
 
 /**
  ** Created with passion and love
- **    for project Snake
+ **    for project TetroSnake
  **        by Jatzuk on 16.01.2019
  **                                            *_____*
  **                                           *_*****_*
