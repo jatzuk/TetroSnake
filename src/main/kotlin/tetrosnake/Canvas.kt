@@ -63,7 +63,7 @@ class Canvas : JPanel(), ActionListener {
             }
         })
         timer.start()
-        ObstacleCreator().start()
+//        ObstacleCreator().start()
     }
 
     private fun initGameObjects() {
@@ -72,15 +72,19 @@ class Canvas : JPanel(), ActionListener {
         }
 
         snake = Snake()
-        with(snake.body) {
-            add(Point(40, 20))
-            add(Point(41, 20))
-            add(Point(42, 20))
-        }
-        for ((sp, i) in (0 until snake.body.size).withIndex()) {
-            val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
-            board[snake.body[sp].y][snake.body[sp].x] = char
-        }
+        board[snake.first.y][snake.first.x] = SNAKE_HEAD_TAG
+        board[snake.first.y][snake.first.x + 1] = SNAKE_BODY_TAG
+        board[snake.first.y][snake.first.x + 2] = SNAKE_BODY_TAG
+
+//        with(snake.body) {
+//            add(Point(40, 20))
+//            add(Point(41, 20))
+//            add(Point(42, 20))
+//        }
+//        for ((sp, i) in (0 until snake.body.size).withIndex()) {
+//            val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
+//            board[snake.body[sp].y][snake.body[sp].x] = char
+//        }
 
         food = Food()
     }
@@ -92,48 +96,23 @@ class Canvas : JPanel(), ActionListener {
 
     private fun render(g: Graphics2D) {
         if (isAlive) {
-//            if (!isFalling && (checkCollisionAtSelf() || checkCollisionAtObstaclesViaHead())) gameEnd()
-//            if (!isFalling && checkCollisionAtPointViaHead(food)) {
+//            if (!isFalling && (snake.checkCollisionWith(snake))) gameEnd()
+//            if (!isFalling && snake.checkCollisionWith(food)) {
 //                val point = Point()
 //                with(snake.body[snake.body.size - 1]) {
 //                    point.x = this.x
 //                    point.y = this.y
 //                }
-//                createFood()
 //                snake.body.add(point)
-//                if (timer.delay > 1) timer.delay -= 1
+//                food = Food()
+//                if (timer.delay > 0) timer.delay--
 //            }
-//            g.color = Color.YELLOW
-//            g.fillRect(snake.body[0].x, snake.body[0].y, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
-//            g.color = Color.WHITE
-//            for (i in 1 until snake.body.size) g.fillRect(snake.body[i].x, snake.body[i].y, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
-//            g.color = Color.GREEN
-//            g.fillRect(food.x, food.y, POINT_SIZE_BLOCK, POINT_SIZE_BLOCK)
 //
 //            if (obstacles.isNotEmpty()) {
-//                g.color = Color.RED
 //                for (i in 0 until obstacles.size) {
-//                    for (j in 0 until obstacles[i].wall.size) g.fillRect(obstacles[i].wall[j]!!.x, obstacles[i].wall[j]!!.y, POINT_SIZE_BLOCK, POINT_SIZE_BLOCK)
+//                    for (j in 0 until obstacles[i].body.size) if (snake.checkCollisionWith(obstacles[i])) gameEnd()
 //                }
 //            }
-
-            if (!isFalling && (snake.checkCollisionWith(snake))) gameEnd()
-            if (!isFalling && snake.checkCollisionWith(food)) {
-                val point = Point()
-                with(snake.body[snake.body.size - 1]) {
-                    point.x = this.x
-                    point.y = this.y
-                }
-                snake.body.add(point)
-                food = Food()
-                if (timer.delay > 0) timer.delay--
-            }
-
-            if (obstacles.isNotEmpty()) {
-                for (i in 0 until obstacles.size) {
-                    for (j in 0 until obstacles[i].body.size) if (snake.checkCollisionWith(obstacles[i])) gameEnd()
-                }
-            }
 
             for (y in 0 until board.size) {
                 for (x in 0 until board[y].size) {
@@ -142,14 +121,13 @@ class Canvas : JPanel(), ActionListener {
                         SNAKE_HEAD_TAG -> Color.YELLOW
                         SNAKE_BODY_TAG -> Color.WHITE
                         FOOD_TAG -> Color.GREEN
-                        EMPTY_TAG -> Color.BLACK
                         else -> Color.BLACK
                     }
                     g.fillRect(x * POINT_SIZE_BLOCK, y * POINT_SIZE_BLOCK, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
                 }
             }
         }
-        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | score: ${snake.body.size - 3} $FOOD_TAG: x: ${food.body[0].x},y: ${food.body[0].y} $SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
+//        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | score: ${snake.blockSize.size - 3} $FOOD_TAG: x: ${food.body[0].x},y: ${food.body[0].y} $SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
     }
 
     private fun gameEnd() {
@@ -251,47 +229,91 @@ class Canvas : JPanel(), ActionListener {
     }
 
     inner class Snake : GameObject {
-        override val body = ArrayList<Point>()
+        //        override val body = ArrayList<Point>()
+        override var blockSize = 3
+        override val first = Point(40, 20)
 
         //        TODO("self killing in right case")
         var direction = /*randomDirection()*/ Direction.LEFT
 
         fun move() {
             if (!isFalling) {
-                board[body[body.size - 1].y][body[body.size - 1].x] = EMPTY_TAG
+//                board[body[body.size - 1].y][body[body.size - 1].x] = EMPTY_TAG
 
-                for (i in body.size - 1 downTo 1) {
-                    body[i].x = body[i - 1].x
-                    body[i].y = body[i - 1].y
-                    board[body[i].y][body[i].x] = board[body[i - 1].y][body[i - 1].x]
-                    board[body[i].y][body[i].x] = SNAKE_BODY_TAG
-                }
+
+//                for (i in blockSize - 1 downTo 1) {
+//                    println(board[first.y][first.x])
+//                }
+
+//
+//                for (i in body.size - 1 downTo 1) {
+//                    body[i].x = body[i - 1].x
+//                    body[i].y = body[i - 1].y
+//                    board[body[i].y][body[i].x] = board[body[i - 1].y][body[i - 1].x]
+//                    board[body[i].y][body[i].x] = SNAKE_BODY_TAG
+//                }
+//
+//                for (i in first.x + blockSize - 1 downTo first.x) {
+//                    board[first.y][i] = board[first.y][i - 1]
+//                }
 
                 when (direction) {
-                    Direction.UP -> if (body[0].y > 0) body[0].y-- else body[0].y = HEIGHT / POINT_SIZE_BLOCK - 1
-                    Direction.RIGHT -> if (body[0].x < WIDTH / POINT_SIZE_BLOCK - 1) body[0].x++ else body[0].x = 0
-                    Direction.DOWN -> if (body[0].y < HEIGHT / POINT_SIZE_BLOCK - 1) body[0].y++ else body[0].y = 0
-                    Direction.LEFT -> if (body[0].x > 0) body[0].x-- else body[0].x = WIDTH / POINT_SIZE_BLOCK - 1
-                }
-                board[body[0].y][body[0].x] = SNAKE_HEAD_TAG
-            } else {
-                for (i in body.size - 1 downTo 0) {
-                    board[body[i].y][body[i].x] = EMPTY_TAG
-                    body[i].y++
-                    board[body[i].y][body[i].x] = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
+                    Direction.UP -> {
+                        val index = if (first.y + blockSize - 1 >= board[first.y].size) first.y + blockSize - 1 - board[first.y].size else first.y +
+                        board[first.y + blockSize - 1][first.x] = EMPTY_TAG
+//                        val index = if (first.y + blockSize - 1 )
+                        if (first.y > 0){
+                            first.y--
+                        }
+                        else {
+                            first.y = HEIGHT / POINT_SIZE_BLOCK - 1
+                        }
+                    }
+                    Direction.RIGHT -> {
+                        board[first.y][first.x - blockSize - 1] = EMPTY_TAG
+                        if (first.x < WIDTH / POINT_SIZE_BLOCK - 1) first.x++ else first.x = 0
+                    }
+                    Direction.DOWN -> {
+                        board[first.y - blockSize - 1][first.x] = EMPTY_TAG
+                        if (first.y < HEIGHT / POINT_SIZE_BLOCK - 1) first.y++ else first.y = 0
+                    }
+                    Direction.LEFT -> {
+                        val index = if (first.x + blockSize - 1 >= board[first.y].size) first.x + blockSize - 1 - board[first.y].size else first.x + blockSize - 1
+                        board[first.y][index] = EMPTY_TAG
+                        if (first.x > 0) first.x--
+                        else first.x = WIDTH / POINT_SIZE_BLOCK - 1
 
+                    }
                 }
+                board[first.y][first.x] = SNAKE_BODY_TAG
+            } else {
+//                for (i in body.size - 1 downTo 0) {
+//                    board[body[i].y][body[i].x] = EMPTY_TAG
+//                    body[i].y++
+//                    board[body[i].y][body[i].x] = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
+
+//                }
 //                val max = body.maxBy { it.y }!!
 //                if (checkCollisionAtObstacles() || (max.y > HEIGHT - POINT_SIZE_BLOCK)) createObstacleFromSnake()
             }
 
         }
 
-
+//        fun checkCollisionWith(gameObject: GameObject): Boolean {
+//            when (gameObject) {
+//                is Canvas.Snake -> for (i in 1 until body.size) if (body[0] == gameObject.body[i]) return true
+//                is Canvas.Food -> if (body[0] == gameObject) return true
+//                is Canvas.Obstacle -> for (i in 0 until gameObject.body.size) if (body[0] == gameObject.body[i]) return true
+//            }
+//            return false
+//        }
     }
 
     inner class Food : GameObject {
-        override val body = ArrayList<Point>()
+        //        override val body = ArrayList<Point>()
+        override val blockSize = 1
+        override lateinit var first: Point
+
 
         init {
             val food = Point()
@@ -316,8 +338,9 @@ class Canvas : JPanel(), ActionListener {
 //                    }
 //                }
 //            }
-            body.add(food)
-            board[body[0].y][body[0].x] = 'F'
+//            body.add(food)
+//            board[body[0].y][body[0].x] = 'F'
+            board[food.y][food.x] = FOOD_TAG
         }
     }
 
@@ -331,7 +354,9 @@ class Canvas : JPanel(), ActionListener {
     }
 
     inner class Obstacle(size: Int = WALL_SIZE) : GameObject {
-        override val body = ArrayList<Point>(size)
+        //        override val body = ArrayList<Point>(size)
+        override val blockSize = size
+        override lateinit var first: Point
 
         init {
             val obstacle = Point()
@@ -353,9 +378,9 @@ class Canvas : JPanel(), ActionListener {
 //                }
 //            }
 
-            if (Random().nextBoolean()) for (i in 0 until size) body.add(Point(obstacle.x++, y))
-            else for (i in 0 until size) body.add(Point(x, obstacle.y++))
-            for (i in 0 until body.size) board[body[i].y][body[i].x] = 'O'
+//            if (Random().nextBoolean()) for (i in 0 until size) body.add(Point(obstacle.x++, y))
+//            else for (i in 0 until size) body.add(Point(x, obstacle.y++))
+//            for (i in 0 until body.size) board[body[i].y][body[i].x] = 'O'
         }
     }
 

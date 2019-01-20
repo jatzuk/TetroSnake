@@ -23,16 +23,9 @@ import java.util.ArrayList
 
 object Util {
     interface GameObject {
-        val body: ArrayList<Point>
-
-        fun checkCollisionWith(gameObject: GameObject): Boolean {
-            when (gameObject) {
-                is Canvas.Snake -> for (i in 1 until body.size) if (body[0] == gameObject.body[i]) return true
-                is Canvas.Food -> if (body[0] == gameObject.body[0]) return true
-                is Canvas.Obstacle -> for (i in 0 until gameObject.body.size) if (body[0] == gameObject.body[i]) return true
-            }
-            return false
-        }
+//        val body: ArrayList<Point>
+        val blockSize: Int
+        val first: Point
     }
 
 
