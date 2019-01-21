@@ -1,9 +1,6 @@
 package tetrosnake
 
 import util.Util.Direction
-import util.Util.GameObject
-import util.Util.randomX
-import util.Util.randomY
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -30,14 +27,9 @@ import javax.swing.Timer
 
 class Canvas : JPanel(), ActionListener {
     private val timer = Timer(BASE_DELAY, this)
-    private lateinit var snake: Snake
-    private lateinit var food: Food
     private var obstacleCreator = ObstacleCreator()
-    private var obstacles = ArrayList<Obstacle>()
-    private var isAlive = true
-    private var isFalling = false
     private var isPause = false
-    private val board = Array(HEIGHT / POINT_SIZE_BLOCK) { CharArray(WIDTH / POINT_SIZE_BLOCK) }
+    private lateinit var food: Food
 
     init {
         background = Color.BLACK
@@ -50,21 +42,23 @@ class Canvas : JPanel(), ActionListener {
         initGameObjects()
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent?) {
-                when (e?.keyCode) {
-                    KeyEvent.VK_UP -> if (!isFalling && snake.direction != Direction.DOWN) snake.direction = Direction.UP
-                    KeyEvent.VK_RIGHT -> if (!isFalling && snake.direction != Direction.LEFT) snake.direction = Direction.RIGHT
-                    KeyEvent.VK_DOWN -> if (!isFalling && snake.direction != Direction.UP) snake.direction = Direction.DOWN
-                    KeyEvent.VK_LEFT -> if (!isFalling && snake.direction != Direction.RIGHT) snake.direction = Direction.LEFT
-                    KeyEvent.VK_SPACE -> if (!isFalling) isFalling = true
-                    KeyEvent.VK_R -> if (!isAlive) restart()
-                    KeyEvent.VK_P -> if (!isPause) pause() else unPause()
+                with(snake) {
+                    when (e?.keyCode) {
+                        KeyEvent.VK_UP -> if (!isFalling && direction != Direction.DOWN) direction = Direction.UP
+                        KeyEvent.VK_RIGHT -> if (!isFalling && direction != Direction.LEFT) direction = Direction.RIGHT
+                        KeyEvent.VK_DOWN -> if (!isFalling && direction != Direction.UP) direction = Direction.DOWN
+                        KeyEvent.VK_LEFT -> if (!isFalling && direction != Direction.RIGHT) direction = Direction.LEFT
+                        KeyEvent.VK_SPACE -> if (!isFalling) isFalling = true
+                        KeyEvent.VK_R -> if (!isAlive) restart()
+                        KeyEvent.VK_P -> if (!isPause) pause() else unPause()
 //                    TODO("debug only")
-                    KeyEvent.VK_S -> printBoard()
+                        KeyEvent.VK_S -> printBoard()
+                    }
                 }
             }
         })
         timer.start()
-        obstacleCreator.start()
+//        obstacleCreator.start()
     }
 
     private fun initGameObjects() {
@@ -76,59 +70,42 @@ class Canvas : JPanel(), ActionListener {
         food = Food()
     }
 
-    override fun paintComponent(g: Graphics?) {
-        super.paintComponent(g)
-        render(g!! as Graphics2D)
+    override fun actionPerformed(e: ActionEvent?) {
+        snake.move()
+        checkCollisions()
+        repaint()
     }
 
-    private fun render(g: Graphics2D) {
-        if (isAlive) {
-            if (!isFalling && (snake.checkCollisionWith(snake))) gameEnd()
-            if (!isFalling && snake.checkCollisionWith(food)) {
-                val point = Point()
-                with(snake.body[snake.body.size - 1]) {
-                    point.x = this.x
-                    point.y = this.y
+    override fun paintComponent(g: Graphics) {
+        super.paintComponent(g as Graphics2D)
+        for (y in 0 until board.size) {
+            for (x in 0 until board[y].size) {
+                g.color = when (board[y][x]) {
+                    OBSTACLE_TAG -> Color.RED
+                    SNAKE_HEAD_TAG -> Color.YELLOW
+                    SNAKE_BODY_TAG -> Color.WHITE
+                    FOOD_TAG -> Color.GREEN
+                    EMPTY_TAG -> Color.BLACK
+                    else -> Color.BLACK
                 }
-                snake.body.add(point)
-                food = Food()
-                println(snake.body.size)
-                if (timer.delay > 0) timer.delay--
-            }
-
-            if (obstacles.isNotEmpty()) {
-                for (i in 0 until obstacles.size) {
-                    for (j in 0 until obstacles[i].body.size) if (snake.checkCollisionWith(obstacles[i])) gameEnd()
-                }
-            }
-
-            for (y in 0 until board.size) {
-                for (x in 0 until board[y].size) {
-                    g.color = when (board[y][x]) {
-                        OBSTACLE_TAG -> Color.RED
-                        SNAKE_HEAD_TAG -> Color.YELLOW
-                        SNAKE_BODY_TAG -> Color.WHITE
-                        FOOD_TAG -> Color.GREEN
-                        EMPTY_TAG -> Color.BLACK
-                        else -> Color.BLACK
-                    }
-                    g.fillRect(x * POINT_SIZE_BLOCK, y * POINT_SIZE_BLOCK, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
-                }
+                g.fillRect(x * POINT_SIZE_BLOCK, y * POINT_SIZE_BLOCK, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
             }
         }
-        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | score: ${snake.body.size - 3} $FOOD_TAG: x: ${food.body[0].x},y: ${food.body[0].y} $SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
+        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | " +
+                "score: ${snake.body.size - 3} $FOOD_TAG: x: ${food.body[0].x},y: ${food.body[0].y} " +
+                "$SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
     }
 
     private fun gameEnd() {
-        isAlive = false
+        snake.isAlive = false
         timer.stop()
         obstacleCreator.interrupt()
     }
 
     private fun restart() {
         initGame()
-        isAlive = true
-        isFalling = false
+        snake.isAlive = true
+        snake.isFalling = false
         timer.delay = BASE_DELAY
         obstacleCreator = ObstacleCreator()
         obstacleCreator.start()
@@ -144,177 +121,80 @@ class Canvas : JPanel(), ActionListener {
         isPause = false
         timer.restart()
         obstacleCreator = ObstacleCreator()
-        obstacleCreator.start()
+//        obstacleCreator.start()
     }
 
-    override fun actionPerformed(e: ActionEvent?) {
-        snake.move()
-        repaint()
+    private fun checkCollisions() {
+        if (snake.checkCollisionWith(snake)) gameEnd()
+        if (snake.checkCollisionWith(food)) {
+            val point = Point()
+            with(snake.body[snake.body.size - 1]) {
+                point.x = this.x
+                point.y = this.y
+            }
+            snake.body.add(point)
+            food = Food()
+            if (timer.delay > 0) timer.delay--
+        }
+
+        for (i in 0 until obstacles.size) {
+            for (j in 0 until obstacles[i].body.size) {
+                if (snake.checkCollisionWith(obstacles[i])) {
+                    if (!snake.isFalling) gameEnd() else snake.transformToObstacle()
+                }
+            }
+        }
     }
 
     companion object {
-        private const val OBSTACLE_CREATOR_DELAY_TIME = 10_000L
         private const val BASE_DELAY = 140
-        private const val WALL_SIZE = 3
-        private const val FOOD_TAG = 'F'
-        private const val SNAKE_HEAD_TAG = 'H'
-        private const val SNAKE_BODY_TAG = 'S'
-        private const val OBSTACLE_TAG = 'O'
-        private const val EMPTY_TAG = 'E'
+        private const val OBSTACLE_CREATOR_DELAY_TIME = 10_000L
+        const val WALL_SIZE = 3
+        const val FOOD_TAG = 'F'
+        const val SNAKE_HEAD_TAG = 'H'
+        const val SNAKE_BODY_TAG = 'S'
+        const val OBSTACLE_TAG = 'O'
+        const val EMPTY_TAG = 'E'
         const val WIDTH = 500
         const val HEIGHT = 300
         const val POINT_SIZE_BLOCK = 10
         const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
-    }
+        val board = Array(Canvas.HEIGHT / Canvas.POINT_SIZE_BLOCK) { CharArray(Canvas.WIDTH / Canvas.POINT_SIZE_BLOCK) }
+        val obstacles = ArrayList<Obstacle>()
+        lateinit var snake: Snake
 
-    inner class Snake : GameObject {
-        override val body = ArrayList<Point>()
+        fun canAddGameObject(x: Int, y: Int, limx: Int, limy: Int): Boolean {
+            println("trying to add new game object...")
 
-        //        TODO("self killing in right case")
-        var direction = /*randomDirection()*/ Direction.LEFT
+            for (i in 0 until board.size) {
+                for (j in 0 until board[i].size) {
 
-        init {
-            with(body) {
-                add(Point(40, 20))
-                add(Point(41, 20))
-                add(Point(42, 20))
-            }
-            for ((sp, i) in (0 until body.size).withIndex()) {
-                val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
-                board[body[sp].y][body[sp].x] = char
-            }
-        }
-
-        fun move() {
-            if (!isFalling) {
-                board[body[body.size - 1].y][body[body.size - 1].x] = EMPTY_TAG
-                for (i in body.size - 1 downTo 1) {
-                    body[i].x = body[i - 1].x
-                    body[i].y = body[i - 1].y
-                    board[body[i].y][body[i].x] = SNAKE_BODY_TAG
                 }
-
-                when (direction) {
-                    Direction.UP -> if (body[0].y > 0) body[0].y-- else body[0].y = HEIGHT / POINT_SIZE_BLOCK - 1
-                    Direction.RIGHT -> if (body[0].x < WIDTH / POINT_SIZE_BLOCK - 1) body[0].x++ else body[0].x = 0
-                    Direction.DOWN -> if (body[0].y < HEIGHT / POINT_SIZE_BLOCK - 1) body[0].y++ else body[0].y = 0
-                    Direction.LEFT -> if (body[0].x > 0) body[0].x-- else body[0].x = WIDTH / POINT_SIZE_BLOCK - 1
-                }
-
-                board[body[0].y][body[0].x] = SNAKE_HEAD_TAG
-            } else {
-                if (body.maxBy { it.y }!!.y < HEIGHT / POINT_SIZE_BLOCK - 1) {
-                    for (i in 0 until body.size) board[body[i].y++][body[i].x] = EMPTY_TAG
-                    for (i in 0 until body.size) board[body[i].y][body[i].x] = SNAKE_BODY_TAG
-                } else snake.createObstacle()
-            }
-        }
-
-        fun checkCollisionWith(gameObject: GameObject): Boolean {
-            when (gameObject) {
-                is Canvas.Snake -> for (i in 1 until body.size) if (checkCollisionAtPoint(gameObject.body[i])) return true
-                is Canvas.Food -> if (checkCollisionAtPoint(gameObject.body[0])) return true
-                is Canvas.Obstacle -> for (i in 0 until gameObject.body.size) if (checkCollisionAtPoint(gameObject.body[i])) return true
-            }
-            return false
-        }
-
-        private fun checkCollisionAtPoint(point: Point) = body[0].location == point.location
-
-        private fun createObstacle() {
-            val obstacle = Obstacle(body.size - 1)
-            for (i in 0 until body.size - 1) {
-                board[body[i].y][body[i].x] = OBSTACLE_TAG
-                obstacle.body.add(Point(body[i].y, body[i].x))
             }
 
-
-            obstacles.add(obstacle)
-            isFalling = false
-            snake = Snake()
-        }
-    }
-
-    inner class Food : GameObject {
-        override val body = ArrayList<Point>()
-
-        init {
-            val food = Point()
-//            label@ while (true) {
-            food.x = randomX()
-            food.y = randomY()
-//                println("trying to create new food: ${food.location}")
-//                snakeLoop@ for (i in 0 until snake.body.size) {
-//                    if (food.location == snake.body[i].location) {
-//                        println("retrying recreate food :${food.location} snake: ${snake.body[i].location}")
-//                        if (i == snake.body.size - 1) continue@label
-//                        else continue
-//                    } else break@label
-//                }
-//
-//                obstaclesLoop@ for (i in 0 until obstacles.size) {
-//                    for (j in 0 until obstacles[i].body.size) {
-//                        if (food.location == obstacles[i].body[j].location) {
-//                            println("retrying recreate food: ${food.location} snake: ${obstacles[i].body[j].location}")
-//                            continue@label
-//                        } else break@label
-//                    }
-//                }
-//            }
-            body.add(food)
-            board[body[0].y][body[0].x] = FOOD_TAG
+            return true
         }
     }
 
     private inner class ObstacleCreator : Thread() {
         override fun run() {
-            while (isAlive && !isPause) {
-                Thread.sleep(OBSTACLE_CREATOR_DELAY_TIME)
-                obstacles.add(Obstacle(WALL_SIZE))
+            try {
+                while (snake.isAlive && !isInterrupted) {
+                    sleep(OBSTACLE_CREATOR_DELAY_TIME)
+                    obstacles.add(Obstacle(WALL_SIZE))
+                }
+            } catch (e: InterruptedException) {
             }
         }
     }
 
-    inner class Obstacle(size: Int = WALL_SIZE) : GameObject {
-        override val body = ArrayList<Point>(size)
-
-        init {
-            val obstacle = Point()
-//            label@ while (true) {
-            obstacle.x = randomX(3)
-            obstacle.y = randomY(3)
-//                println("trying to create new obstacle at :${obstacle.location}")
-//                snakeLoop@ for (i in 0 until snake.body.size) {
-//                    if (obstacle.location == snake.body[i].location) {
-//                        println("retrying recreate obstacle: ${obstacle.location} snake: ${snake.body[i].location}")
-//                        continue@label
-//                    } else break@snakeLoop
-//                }
-//                obstaclesLoop@ for (i in 0 until body.size) {
-//                    if (obstacle.location == body[i].location) {
-//                        println("retrying recreate obstacle: ${obstacle.location} obstacle ${body[i].location}")
-//                        continue@label
-//                    } else break@label
-//                }
-//            }
-
-            if (Random().nextBoolean()) for (i in 0 until size) body.add(Point(obstacle.x++, y))
-            else for (i in 0 until size) body.add(Point(x, obstacle.y++))
-            for (i in 0 until body.size) board[body[i].y][body[i].x] = OBSTACLE_TAG
-        }
-
-        fun checkRows(): Boolean {
-            return false
-        }
-    }
-
     fun printBoard() {
-        for (y in 0 until board.size) {
+        for (y in 25 until board.size) {
             for (x in 0 until board[y].size) {
                 print(board[y][x])
             }
             println()
         }
-        timer.stop()
+        println("---------------------------------------\n")
     }
 }
