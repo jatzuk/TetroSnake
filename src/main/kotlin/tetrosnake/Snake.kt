@@ -2,12 +2,12 @@ package tetrosnake
 
 import tetrosnake.Canvas.Companion.EMPTY_TAG
 import tetrosnake.Canvas.Companion.HEIGHT
+import tetrosnake.Canvas.Companion.OBSTACLE_TAG
 import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
 import tetrosnake.Canvas.Companion.SNAKE_BODY_TAG
 import tetrosnake.Canvas.Companion.SNAKE_HEAD_TAG
 import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.board
-import tetrosnake.Canvas.Companion.obstacles
 import tetrosnake.Canvas.Companion.snake
 import util.Util
 import java.awt.Point
@@ -37,9 +37,9 @@ class Snake : Util.GameObject {
     init {
         with(body) {
             //            TODO("random")
-            add(Point(40, 25))
-            add(Point(41, 25))
-            add(Point(42, 25))
+            add(Point(20, 25))
+            add(Point(21, 25))
+            add(Point(22, 25))
         }
         for ((sp, i) in (0 until body.size).withIndex()) {
             val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
@@ -66,7 +66,7 @@ class Snake : Util.GameObject {
 
         } else {
             val max = body.maxBy { it.y }!!
-            if (max.y < HEIGHT / POINT_SIZE_BLOCK - 1 && !checkCollisionAtObstaclesWhileFalling()) {
+            if (max.y < HEIGHT / POINT_SIZE_BLOCK - 1 && !checkCollisionAtObstaclesOnFall()) {
                 for (i in 0 until body.size) board[body[i].y++][body[i].x] = EMPTY_TAG
                 for (i in 0 until body.size) board[body[i].y][body[i].x] = SNAKE_BODY_TAG
             } else transformToObstacle()
@@ -78,37 +78,37 @@ class Snake : Util.GameObject {
         when (gameObject) {
             is Snake -> for (i in 1 until body.size) if (checkCollisionAtPoint(gameObject.body[i])) return true
             is Food -> if (checkCollisionAtPoint(gameObject.body[0])) return true
-            is Obstacle -> for (i in 0 until gameObject.body.size) if (checkCollisionAtPoint(gameObject.body[i])) return true
         }
         return false
     }
 
-    fun transformToObstacle() {
-        obstacles.add(Obstacle(snake = snake))
+    private fun transformToObstacle() {
+        Obstacle(snake = snake)
         isFalling = false
         snake = Snake()
     }
 
-    private fun checkCollisionAtPoint(point: Point) = body[0].location == point.location
+    private fun checkCollisionAtPoint(point: Point) = body[0] == point
 
-    private fun checkCollisionAtObstaclesWhileFalling(): Boolean {
-        val startTime = System.nanoTime()
+    private fun checkCollisionAtObstaclesOnFall(): Boolean {
+        var minX = body[0].x
+        var maxX = body[body.size - 1].x
+        var minY = body[0].y
+        var maxY = body[body.size - 1].y
 
-        for (i in 0 until body.size) {
-            for (j in 0 until obstacles.size) {
-                for (k in 0 until obstacles[j].body.size) {
-                    val sx = body[i].x
-                    val sy = body[i].y
-                    val ox = obstacles[j].body[k].x
-                    val oy = obstacles[j].body[k].y
-                    if (sx == ox && sy + 1 == oy) {
-                        println("time elapsed: ${(System.nanoTime() - startTime)} ns.")
-                        return true
-                    }
+        for (point in body) {
+            if (point.x < minX) minX = point.x
+            if (point.x > maxX) maxX = point.x
+            if (point.y < minY) minY = point.y
+            if (point.y > maxY) maxY = point.y
+        }
+
+            for (y in maxY downTo minY) {
+                for (x in minX .. maxX) {
+                    if (board[y + 1][x] == OBSTACLE_TAG && board[y][x] == SNAKE_BODY_TAG) return true
                 }
             }
-        }
-        println("time elapsed: ${(System.nanoTime() - startTime)} ns.")
+
         return false
     }
 }

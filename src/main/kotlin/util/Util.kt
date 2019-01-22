@@ -1,6 +1,5 @@
 package util
 
-import tetrosnake.Canvas
 import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.HEIGHT
 import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
@@ -33,7 +32,7 @@ object Util {
 //        return x
 //    }
 
-    fun randomX(posix: Int = 0) = (Math.random() * (WIDTH / POINT_SIZE_BLOCK - posix)).toInt()
+    fun randomX(offset: Int = 0) = (Math.random() * (WIDTH / POINT_SIZE_BLOCK  - offset)).toInt()
 
 //    fun getRoundY10(): Int {
 //        var y = (Math.random() * HEIGHT / POINT_SIZE_BLOCK - POINT_SIZE_BLOCK).toInt() - POINT_SIZE_BLOCK
@@ -41,7 +40,7 @@ object Util {
 //        return y
 //    }
 
-    fun randomY(posix: Int = 0) = (Math.random() * (HEIGHT / POINT_SIZE_BLOCK - posix)).toInt()
+    fun randomY(offset: Int = 0) = (Math.random() * (HEIGHT / POINT_SIZE_BLOCK - offset) ).toInt()
 
     fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
 

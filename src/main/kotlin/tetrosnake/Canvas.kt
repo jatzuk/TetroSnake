@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.Timer
@@ -58,7 +57,7 @@ class Canvas : JPanel(), ActionListener {
             }
         })
         timer.start()
-//        obstacleCreator.start()
+        obstacleCreator.start()
     }
 
     private fun initGameObjects() {
@@ -71,8 +70,8 @@ class Canvas : JPanel(), ActionListener {
     }
 
     override fun actionPerformed(e: ActionEvent?) {
-        snake.move()
         checkCollisions()
+        snake.move()
         repaint()
     }
 
@@ -96,34 +95,6 @@ class Canvas : JPanel(), ActionListener {
                 "$SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
     }
 
-    private fun gameEnd() {
-        snake.isAlive = false
-        timer.stop()
-        obstacleCreator.interrupt()
-    }
-
-    private fun restart() {
-        initGame()
-        snake.isAlive = true
-        snake.isFalling = false
-        timer.delay = BASE_DELAY
-        obstacleCreator = ObstacleCreator()
-        obstacleCreator.start()
-    }
-
-    private fun pause() {
-        isPause = true
-        timer.stop()
-        obstacleCreator.interrupt()
-    }
-
-    private fun unPause() {
-        isPause = false
-        timer.restart()
-        obstacleCreator = ObstacleCreator()
-//        obstacleCreator.start()
-    }
-
     private fun checkCollisions() {
         if (snake.checkCollisionWith(snake)) gameEnd()
         if (snake.checkCollisionWith(food)) {
@@ -137,18 +108,47 @@ class Canvas : JPanel(), ActionListener {
             if (timer.delay > 0) timer.delay--
         }
 
-        for (i in 0 until obstacles.size) {
-            for (j in 0 until obstacles[i].body.size) {
-                if (snake.checkCollisionWith(obstacles[i])) {
-                    if (!snake.isFalling) gameEnd() else snake.transformToObstacle()
-                }
-            }
+        var checkX = snake.body[0].x
+        var checkY = snake.body[0].y
+        when (snake.direction) {
+            Direction.UP -> checkY = if (checkY > 0) --checkY else HEIGHT / POINT_SIZE_BLOCK - 1
+            Direction.RIGHT -> checkX = if (checkX < WIDTH / POINT_SIZE_BLOCK - 1) ++checkX else 0
+            Direction.DOWN -> checkY = if (checkY < HEIGHT / POINT_SIZE_BLOCK - 1) ++checkY else 0
+            Direction.LEFT -> checkX = if (checkX > 0) --checkX else WIDTH / POINT_SIZE_BLOCK - 1
         }
+        if (board[checkY][checkX] == OBSTACLE_TAG && !snake.isFalling) gameEnd()
+    }
+
+    private fun gameEnd() {
+        obstacleCreator.interrupt()
+        snake.isAlive = false
+        timer.stop()
+    }
+
+    private fun restart() {
+        obstacleCreator = ObstacleCreator()
+        snake.isAlive = true
+        snake.isFalling = false
+        timer.delay = BASE_DELAY
+        initGame()
+    }
+
+    private fun pause() {
+        isPause = true
+        timer.stop()
+        obstacleCreator.interrupt()
+    }
+
+    private fun unPause() {
+        isPause = false
+        timer.restart()
+        obstacleCreator = ObstacleCreator()
+        obstacleCreator.start()
     }
 
     companion object {
         private const val BASE_DELAY = 140
-        private const val OBSTACLE_CREATOR_DELAY_TIME = 10_000L
+        private const val OBSTACLE_CREATOR_DELAY_TIME = 1_000L
         const val WALL_SIZE = 3
         const val FOOD_TAG = 'F'
         const val SNAKE_HEAD_TAG = 'H'
@@ -160,37 +160,58 @@ class Canvas : JPanel(), ActionListener {
         const val POINT_SIZE_BLOCK = 10
         const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
         val board = Array(Canvas.HEIGHT / Canvas.POINT_SIZE_BLOCK) { CharArray(Canvas.WIDTH / Canvas.POINT_SIZE_BLOCK) }
-        val obstacles = ArrayList<Obstacle>()
         lateinit var snake: Snake
 
-        fun canAddGameObject(x: Int, y: Int, limx: Int, limy: Int): Boolean {
-            println("trying to add new game object...")
+        fun arrangeNewGameObject(startX: Int, startY: Int, direction: Boolean = true, requestedSize: Int = 1, recursionDepth: Int = 0): Pair<Int, Int> {
+//            horizontal
 
-            for (i in 0 until board.size) {
-                for (j in 0 until board[i].size) {
+            if (recursionDepth == 10) {
+                throw IllegalArgumentException("recursion level reached 10, can not find appropriate coordinates")
+            }
 
+            println("trying to place new game object with x = $startX y = $startY requested size: $requestedSize, recursion level: $recursionDepth")
+            val endX = startX + requestedSize
+            val endY = startY + 1
+            var matchedBlocks = 0
+            val pair = Pair(startX, startY)
+
+            for (x in startX until endX) {
+                if (board[startY][x] == EMPTY_TAG) matchedBlocks++
+                if (matchedBlocks == requestedSize) {
+                    println("\trequested coordinates for figure with size: $requestedSize, matched successfully with x: $startX, y: $startY, recursion level: $recursionDepth")
+                    break
                 }
             }
 
-            return true
+            if (matchedBlocks < requestedSize) {
+                when {
+//                        is enough space to the right?
+                    WIDTH / POINT_SIZE_BLOCK - 1 - endX > 2 -> arrangeNewGameObject(endX + 1, startY, true, requestedSize, recursionDepth + 1)
+//                        is enough space to the left?
+                    startX > 3 -> arrangeNewGameObject(0, startY, true, requestedSize, recursionDepth + 1)
+//                        check the top
+                    startY > 3 -> arrangeNewGameObject(startX, 0, true, requestedSize, recursionDepth + 1)
+//                        check the bottom
+                    HEIGHT / POINT_SIZE_BLOCK - 1 - endY > 2 -> arrangeNewGameObject(startX, endY + 1, true, requestedSize, recursionDepth + 1)
+                }
+            }
+
+            return pair
         }
     }
 
     private inner class ObstacleCreator : Thread() {
         override fun run() {
-            try {
-                while (snake.isAlive && !isInterrupted) {
-                    sleep(OBSTACLE_CREATOR_DELAY_TIME)
-                    obstacles.add(Obstacle(WALL_SIZE))
-                }
-            } catch (e: InterruptedException) {
+            while (snake.isAlive && !isInterrupted) {
+                sleep(OBSTACLE_CREATOR_DELAY_TIME)
+                Obstacle(WALL_SIZE)
             }
         }
     }
 
     fun printBoard() {
-        for (y in 25 until board.size) {
-            for (x in 0 until board[y].size) {
+        for (y in 23 until board.size) {
+            for (x in 25 until board[y].size) {
                 print(board[y][x])
             }
             println()
