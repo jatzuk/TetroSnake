@@ -48,20 +48,10 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
 
 
             val directionFlag = Random().nextBoolean()
-            val (x, y) = arrangeNewGameObject(randomX(2), randomY(2), true, size)
+            val (x, y) = arrangeNewGameObject(randomX(2), randomY(2), true, size)!!
             if (true) {
-                for (i in 0 until size) {
-                    try {
-                        board[y][x + i] = OBSTACLE_TAG
-                    } catch (e: ArrayIndexOutOfBoundsException) {
-                        println(x)
-                        println(y)
-                        e.printStackTrace()
-                    }
-                }
-            }
-            else for (i in 0 until size) board[y - i][x] = OBSTACLE_TAG
-
+                for (i in 0 until size) board[y][x + i] = OBSTACLE_TAG
+            } else for (i in 0 until size) board[y - i][x] = OBSTACLE_TAG
 
         } else {
             for (i in 0 until snake.body.size) board[snake.body[i].y][snake.body[i].x] = OBSTACLE_TAG

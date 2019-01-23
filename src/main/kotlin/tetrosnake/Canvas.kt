@@ -91,7 +91,7 @@ class Canvas : JPanel(), ActionListener {
             }
         }
         (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | " +
-                "score: ${snake.body.size - 3} $FOOD_TAG: x: ${food.body[0].x},y: ${food.body[0].y} " +
+                "score: ${snake.body.size - 3} $FOOD_TAG: x: ${food.x},y: ${food.y} " +
                 "$SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
     }
 
@@ -155,56 +155,114 @@ class Canvas : JPanel(), ActionListener {
         const val SNAKE_BODY_TAG = 'S'
         const val OBSTACLE_TAG = 'O'
         const val EMPTY_TAG = 'E'
-        const val WIDTH = 500
-        const val HEIGHT = 300
+        const val WIDTH = 100
+        const val HEIGHT = 100
         const val POINT_SIZE_BLOCK = 10
         const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
-        val board = Array(Canvas.HEIGHT / Canvas.POINT_SIZE_BLOCK) { CharArray(Canvas.WIDTH / Canvas.POINT_SIZE_BLOCK) }
+        val board = Array(HEIGHT / POINT_SIZE_BLOCK) { CharArray(WIDTH / POINT_SIZE_BLOCK) }
         lateinit var snake: Snake
 
-        fun arrangeNewGameObject(startX: Int, startY: Int, direction: Boolean = true, requestedSize: Int = 1, recursionDepth: Int = 0): Pair<Int, Int> {
-//            horizontal
+        fun arrangeNewGameObject(x: Int, y: Int, direction: Boolean = true, requestedSize: Int = 1, recursionDepth: Int = 0): Pair<Int, Int>? {
 
-            if (recursionDepth == 10) {
-                throw IllegalArgumentException("recursion level reached 10, can not find appropriate coordinates")
-            }
+            if (/*x in range ||*/ (x < 1 || x > WIDTH / POINT_SIZE_BLOCK - 1)) {
+                println("can not find any possibilities for line $y, returning null")
+                return null
+            } // no possibilities at current line
 
-            println("trying to place new game object with x = $startX y = $startY requested size: $requestedSize, recursion level: $recursionDepth")
-            val endX = startX + requestedSize
-            val endY = startY + 1
-            var matchedBlocks = 0
-            val pair = Pair(startX, startY)
+            println("\ttrying to add object, x = $x, y = $y, size: $requestedSize, rec lvl: $recursionDepth, range: }")
 
-            for (x in startX until endX) {
-                if (board[startY][x] == EMPTY_TAG) matchedBlocks++
-                if (matchedBlocks == requestedSize) {
-                    println("\trequested coordinates for figure with size: $requestedSize, matched successfully with x: $startX, y: $startY, recursion level: $recursionDepth")
-                    break
+            val pair = Pair(x, y)
+            when (direction) {
+                true -> {
+                    if (requestedSize == 3) {
+                        val xl = x - 1
+                        val xr = x + 1
+
+                        if (board[y][xl] == EMPTY_TAG && board[y][x] == EMPTY_TAG && board[y][xr] == EMPTY_TAG) {
+                            println("\t\tmatched at $pair, rec lvl: $recursionDepth")
+                            return pair
+                        } else {
+                            when {
+                                x / 2 /*xl - 1*/ >= requestedSize - 1 -> { // to the left
+                                    println("left -> ${xl - 1} >= ${requestedSize - 1}")
+//                                    range.start = x
+                                    arrangeNewGameObject(x / 2, y, direction, requestedSize, recursionDepth + 1)
+                                }
+                                x * 2 /*xr + 1*/ <= WIDTH / POINT_SIZE_BLOCK - 1 - requestedSize - 1 -> {
+                                    println("right -> ${xr + 1} <= ${WIDTH / POINT_SIZE_BLOCK - 1 - requestedSize - 1}")
+
+                                    arrangeNewGameObject(x * 2, y, direction, requestedSize, recursionDepth + 1)
+                                }
+                            }
+                        }
+
+                    } else { // food
+
+                    }
+                }
+                false -> { // vertical
+
                 }
             }
 
-            if (matchedBlocks < requestedSize) {
-                when {
-//                        is enough space to the right?
-                    WIDTH / POINT_SIZE_BLOCK - 1 - endX > 2 -> arrangeNewGameObject(endX + 1, startY, true, requestedSize, recursionDepth + 1)
-//                        is enough space to the left?
-                    startX > 3 -> arrangeNewGameObject(0, startY, true, requestedSize, recursionDepth + 1)
-//                        check the top
-                    startY > 3 -> arrangeNewGameObject(startX, 0, true, requestedSize, recursionDepth + 1)
-//                        check the bottom
-                    HEIGHT / POINT_SIZE_BLOCK - 1 - endY > 2 -> arrangeNewGameObject(startX, endY + 1, true, requestedSize, recursionDepth + 1)
-                }
-            }
 
             return pair
+
+//            horizontal
+//            if (recursionDepth == 10) {
+//                throw IllegalArgumentException("recursion level reached 10, can not find appropriate coordinates")
+//            }
+//
+//            println("adding game object.. x = $startX y = $startY req size: $requestedSize, rec lvl: $recursionDepth")
+//            val endX = startX + requestedSize
+//            var matchedBlocks = 0
+//            val pair = Pair(startX, startY)
+//
+//            for (x in startX until endX) {
+//                if (board[startY][x] == EMPTY_TAG) matchedBlocks++
+//                if (matchedBlocks == requestedSize) {
+//                    println("\trec coords for size: $requestedSize, matched x: $startX, y: $startY, rec lvl: $recursionDepth")
+//                    break
+//                }
+//            }
+
+//            if (matchedBlocks < requestedSize) {
+//
+//                when {
+//                    startX >= requestedSize -> {
+//                        println("to the left: $startX >= $requestedSize")
+//                        arrangeNewGameObject(randomX(max = startX), startY, direction, requestedSize, recursionDepth + 1)
+//                    }
+//                    WIDTH / POINT_SIZE_BLOCK - 1 - endX >= requestedSize -> {
+//                        println("to the right: ${WIDTH / POINT_SIZE_BLOCK - 1 - endX} >= $requestedSize")
+//                        arrangeNewGameObject(randomX(min = endX + 1), startY, direction, requestedSize, recursionDepth + 1)
+//                    }
+//
+//////                        is enough space to the right?
+////                    WIDTH / POINT_SIZE_BLOCK - 1 - endX > 2 -> arrangeNewGameObject(endX + 1, startY, true, requestedSize, recursionDepth + 1)
+//////                        is enough space to the left?
+////                    startX > 3 -> arrangeNewGameObject(0, startY, true, requestedSize, recursionDepth + 1)
+//////                        check the top
+////                    startY > 3 -> arrangeNewGameObject(startX, 0, true, requestedSize, recursionDepth + 1)
+//////                        check the bottom
+////                    HEIGHT / POINT_SIZE_BLOCK - 1 - startY > 2 -> arrangeNewGameObject(startX, startY + 1, true, requestedSize, recursionDepth + 1)
+//
+//                }
+//            }
+//            return pair
         }
     }
 
     private inner class ObstacleCreator : Thread() {
         override fun run() {
             while (snake.isAlive && !isInterrupted) {
-                sleep(OBSTACLE_CREATOR_DELAY_TIME)
-                Obstacle(WALL_SIZE)
+                try {
+                    sleep(OBSTACLE_CREATOR_DELAY_TIME)
+                    Obstacle(WALL_SIZE)
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                    println(snake.isAlive)
+                }
             }
         }
     }

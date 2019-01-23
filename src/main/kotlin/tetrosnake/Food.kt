@@ -1,9 +1,10 @@
 package tetrosnake
 
+import tetrosnake.Canvas.Companion.FOOD_TAG
+import tetrosnake.Canvas.Companion.board
 import util.Util
-import java.awt.Point
-import java.util.ArrayList
-
+import util.Util.randomX
+import util.Util.randomY
 /**
  ** Created with passion and love
  **    for project Snake
@@ -19,14 +20,10 @@ import java.util.ArrayList
  */
 
 class Food : Util.GameObject {
-    override val body = ArrayList<Point>()
+    val x = randomX()
+    val y = randomY()
 
     init {
-        with(Point()) {
-            x = Util.randomX()
-            y = Util.randomY()
-            body.add(this)
-        }
-        Canvas.board[body[0].y][body[0].x] = Canvas.FOOD_TAG
+        board[y][x] = FOOD_TAG
     }
 }

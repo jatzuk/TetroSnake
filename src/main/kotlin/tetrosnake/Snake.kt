@@ -28,18 +28,15 @@ import java.util.ArrayList
  */
 
 class Snake : Util.GameObject {
-    override val body = ArrayList<Point>()
+    val body = ArrayList<Point>()
     var isFalling = false
     var isAlive = true
     //        TODO("self killing in right case")
     var direction = /*randomDirection()*/ Util.Direction.LEFT
 
     init {
-        with(body) {
-            //            TODO("random")
-            add(Point(20, 25))
-            add(Point(21, 25))
-            add(Point(22, 25))
+        for (i in 0 until 3) {
+            body.add(Point(15 + i, 25))
         }
         for ((sp, i) in (0 until body.size).withIndex()) {
             val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
@@ -76,8 +73,8 @@ class Snake : Util.GameObject {
 
     fun checkCollisionWith(gameObject: Util.GameObject): Boolean {
         when (gameObject) {
-            is Snake -> for (i in 1 until body.size) if (checkCollisionAtPoint(gameObject.body[i])) return true
-            is Food -> if (checkCollisionAtPoint(gameObject.body[0])) return true
+            is Snake -> for (i in 1 until body.size) if (checkCollisionAtPoint(gameObject.body[i].x, gameObject.body[i].y)) return true
+            is Food -> if (checkCollisionAtPoint(gameObject.x, gameObject.y)) return true
         }
         return false
     }
@@ -88,7 +85,7 @@ class Snake : Util.GameObject {
         snake = Snake()
     }
 
-    private fun checkCollisionAtPoint(point: Point) = body[0] == point
+    private fun checkCollisionAtPoint(x: Int, y: Int) = body[0].x == x && body[0].y == y
 
     private fun checkCollisionAtObstaclesOnFall(): Boolean {
         var minX = body[0].x

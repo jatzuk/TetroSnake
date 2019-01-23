@@ -3,8 +3,6 @@ package util
 import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.HEIGHT
 import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
-import java.awt.Point
-import java.util.ArrayList
 
 /**
  ** Created with passion and love
@@ -21,30 +19,15 @@ import java.util.ArrayList
  */
 
 object Util {
-    interface GameObject {
-        val body: ArrayList<Point>
-    }
-
-
-//    fun getRoundX10(): Int {
-//        var x = (Math.random() * WIDTH / POINT_SIZE_BLOCK - POINT_SIZE_BLOCK).toInt() - POINT_SIZE_BLOCK
-//        if (x % 5 != 0) x = Math.round((x + 6) / Canvas.POINT_SIZE_BLOCK.toDouble()).toInt() * POINT_SIZE_BLOCK + POINT_SIZE_BLOCK
-//        return x
-//    }
-
-    fun randomX(offset: Int = 0) = (Math.random() * (WIDTH / POINT_SIZE_BLOCK  - offset)).toInt()
-
-//    fun getRoundY10(): Int {
-//        var y = (Math.random() * HEIGHT / POINT_SIZE_BLOCK - POINT_SIZE_BLOCK).toInt() - POINT_SIZE_BLOCK
-//        if (y % 5 != 0) y = Math.round((y + 6) / POINT_SIZE_BLOCK.toDouble()).toInt() * POINT_SIZE_BLOCK + POINT_SIZE_BLOCK
-//        return y
-//    }
-
-    fun randomY(offset: Int = 0) = (Math.random() * (HEIGHT / POINT_SIZE_BLOCK - offset) ).toInt()
-
-    fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
+    interface GameObject
 
     enum class Direction {
         UP, RIGHT, DOWN, LEFT;
     }
+
+    fun randomX(min: Int = 0, max: Int = WIDTH / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
+
+    fun randomY(min: Int = 0, max: Int = HEIGHT / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
+
+    fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
 }
