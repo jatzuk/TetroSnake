@@ -1,10 +1,10 @@
 package tetrosnake
 
-import tetrosnake.Canvas.Companion.OBSTACLE_TAG
+import tetrosnake.Canvas.Companion.EMPTY_TAG
+import tetrosnake.Canvas.Companion.HEIGHT
+import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
+import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.board
-import util.Util.randomX
-import util.Util.randomY
-import java.util.*
 
 /**
  ** Created with passion and love
@@ -54,9 +54,9 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
         return pair
     }
 
-    private fun horizontalSearch(x: Int, y: Int, recLvl: Int = 0, range: IntRange = -1..-1): Pair<Int, Int>? {
+    private fun horizontalSearch(x: Int, y: Int, recLvl: Int = 0, bound: Int = -1/*range: IntRange = -1..-1*/): Pair<Int, Int>? {
         var pair: Pair<Int, Int>? = null
-        if (x - 1 in range || x < 1 || x > Canvas.WIDTH - 1) {
+        if ( /*x - 1 in range*/  x < 1 || x > WIDTH / POINT_SIZE_BLOCK - 1) {
             println("\t\tcan not add for line $y, returning null")
             return pair
         }
@@ -65,17 +65,17 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
         val xr = x + 1
         println("trying to add object, x: $x, y: $y, reclvl: $recLvl")
 
-        if (board[y][xl] == Canvas.EMPTY_TAG && board[y][x] == Canvas.EMPTY_TAG && board[y][xr] == Canvas.EMPTY_TAG) {
+        if (board[y][xl] == EMPTY_TAG && board[y][x] == EMPTY_TAG && board[y][xr] == EMPTY_TAG) {
             println("\t\tmatched at x: $x, y: $y | $xl..$xr, reclvl: $recLvl")
             pair = Pair(xl, y)
         } else {
-            if (pair == null && x / 2 >= 1/* && x / 2 !in range*/) {
-                println("\tleft-> ${xl - 1} >=")
-                pair = horizontalSearch(x / 2, y, recLvl + 1, xl..xr)
+            if (pair == null && x / 2 != bound && x / 2 > 0/* && x / 2 !in range*/) {
+                println("\tleft->")
+                pair = horizontalSearch(x / 2, y, recLvl + 1, x /*xl..xr*/)
             }
-            if (pair == null && x * 2 <= Canvas.WIDTH - 1) {
-                println("\tright-> ${xr + 1} <= ${Canvas.WIDTH - 1}")
-                pair = horizontalSearch(x * 2, y, recLvl + 1, xl..xr)
+            if (pair == null && x * 2 != bound && x * 2 <= WIDTH / POINT_SIZE_BLOCK - 1) {
+                println("\tright->")
+                pair = horizontalSearch(x * 2, y, recLvl + 1, x /*xl..xr*/)
             }
         }
         return pair
@@ -84,10 +84,18 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
     private fun changeYAxis(x: Int, y: Int, recLvl: Int = 0): Pair<Int, Int>? {
         var pair: Pair<Int, Int>? = null
 
-        if (y < 0 || y > Canvas.HEIGHT - 1) return pair
+        if (y < 0 || y > HEIGHT / POINT_SIZE_BLOCK - 1) return pair
 
-        while (y > -1 && pair == null) pair = horizontalSearch(x, y / 2, recLvl + 1)
-        while (y > Canvas.HEIGHT - 1 && pair == null) pair = horizontalSearch(x, y * 2, recLvl + 1)
+        var cy = y / 2
+        while (cy > 1 && pair == null) {
+            cy /= 2
+            pair = horizontalSearch(x, cy, recLvl + 1)
+        }
+//        cy = y
+//        while (cy > HEIGHT - 1 && pair == null) {
+//            cy *= 2
+//            pair = horizontalSearch(x, cy, recLvl + 1)
+//        }
 
         return pair
     }

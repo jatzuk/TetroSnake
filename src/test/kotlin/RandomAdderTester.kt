@@ -3,6 +3,7 @@ import org.junit.Test
 import tetrosnake.Canvas.Companion.EMPTY_TAG
 import tetrosnake.Canvas.Companion.OBSTACLE_TAG
 import tetrosnake.Canvas.Companion.SNAKE_BODY_TAG
+import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.board
 import tetrosnake.Obstacle
 
@@ -29,8 +30,11 @@ class RandomAdderTester {
             }
         }
 
-        for (i in 0 until 3) board[4][3 + i] = SNAKE_BODY_TAG
-//    for (i in 0 until WIDTH) board[4][i] = SNAKE_BODY_TAG
+//        for (i in 0 until 3) board[4][0+ i] = SNAKE_BODY_TAG
+        for (i in 0 until 10) board[4][i] = SNAKE_BODY_TAG
+        for (i in 0 until 6) board[2][2 + i] = SNAKE_BODY_TAG
+        for (i in 0 until 7) board[1][2 + i] = SNAKE_BODY_TAG
+        for (i in 0 until 7) board[0][2 + i] = SNAKE_BODY_TAG
     }
 
     fun printBoard() {
@@ -45,7 +49,8 @@ class RandomAdderTester {
     @Test
     fun arrangeNewGameObjectTest() {
         fillBoard()
-        val (x, y) = Obstacle().arrangeObstacle(4, 4, true) ?: throw IllegalArgumentException("no match")
+        val (x, y) = Obstacle().arrangeObstacle(1, 4, true)
+                ?: throw IllegalArgumentException("no match")
         for (i in 0 until 3) board[y][x + i] = OBSTACLE_TAG
         printBoard()
     }
