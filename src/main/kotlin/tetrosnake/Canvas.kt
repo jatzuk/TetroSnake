@@ -1,6 +1,6 @@
 package tetrosnake
 
-import util.Util.Direction
+import util.Direction
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -111,10 +111,10 @@ class Canvas : JPanel(), ActionListener {
         var checkX = snake.body[0].x
         var checkY = snake.body[0].y
         when (snake.direction) {
-            Direction.UP -> checkY = if (checkY > 0) --checkY else HEIGHT / POINT_SIZE_BLOCK - 1
-            Direction.RIGHT -> checkX = if (checkX < WIDTH / POINT_SIZE_BLOCK - 1) ++checkX else 0
-            Direction.DOWN -> checkY = if (checkY < HEIGHT / POINT_SIZE_BLOCK - 1) ++checkY else 0
-            Direction.LEFT -> checkX = if (checkX > 0) --checkX else WIDTH / POINT_SIZE_BLOCK - 1
+           Direction.UP -> checkY = if (checkY > 0) --checkY else HEIGHT / POINT_SIZE_BLOCK - 1
+           Direction.RIGHT -> checkX = if (checkX < WIDTH / POINT_SIZE_BLOCK - 1) ++checkX else 0
+           Direction.DOWN -> checkY = if (checkY < HEIGHT / POINT_SIZE_BLOCK - 1) ++checkY else 0
+           Direction.LEFT -> checkX = if (checkX > 0) --checkX else WIDTH / POINT_SIZE_BLOCK - 1
         }
         if (board[checkY][checkX] == OBSTACLE_TAG && !snake.isFalling) gameEnd()
     }
@@ -155,8 +155,8 @@ class Canvas : JPanel(), ActionListener {
         const val SNAKE_BODY_TAG = 'S'
         const val OBSTACLE_TAG = 'O'
         const val EMPTY_TAG = 'E'
-        const val WIDTH = 100
-        const val HEIGHT = 190
+        const val WIDTH = 200
+        const val HEIGHT = 200
         const val POINT_SIZE_BLOCK = 10
         const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
         val board = Array(HEIGHT / POINT_SIZE_BLOCK) { CharArray(WIDTH / POINT_SIZE_BLOCK) }

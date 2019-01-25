@@ -1,10 +1,14 @@
 package tetrosnake
 
 import tetrosnake.Canvas.Companion.FOOD_TAG
+import tetrosnake.Canvas.Companion.HEIGHT
+import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
+import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.board
-import util.Util
-import util.Util.randomX
-import util.Util.randomY
+import util.GameObject
+import util.randomX
+import util.randomY
+
 /**
  ** Created with passion and love
  **    for project Snake
@@ -19,9 +23,9 @@ import util.Util.randomY
  **                                           ***___***
  */
 
-class Food : Util.GameObject {
-    val x = randomX()
-    val y = randomY()
+class Food : GameObject {
+    val x = randomX(max = WIDTH / POINT_SIZE_BLOCK)
+    val y = randomY(max = HEIGHT / POINT_SIZE_BLOCK)
 
     init {
         board[y][x] = FOOD_TAG

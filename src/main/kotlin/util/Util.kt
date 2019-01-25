@@ -18,16 +18,16 @@ import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
  **                                           ***___***
  */
 
-object Util {
-    interface GameObject
+interface GameObject
 
-    enum class Direction {
-        UP, RIGHT, DOWN, LEFT;
-    }
-
-    fun randomX(min: Int = 0, max: Int = WIDTH / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
-
-    fun randomY(min: Int = 0, max: Int = HEIGHT / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
-
-    fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
+enum class Direction {
+    UP, RIGHT, DOWN, LEFT;
 }
+
+class BoundsNotFoundException(string: String) : Exception(string)
+
+fun randomX(min: Int = 0, max: Int = WIDTH / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
+
+fun randomY(min: Int = 0, max: Int = HEIGHT / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
+
+fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
