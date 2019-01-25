@@ -156,7 +156,7 @@ class Canvas : JPanel(), ActionListener {
         const val OBSTACLE_TAG = 'O'
         const val EMPTY_TAG = 'E'
         const val WIDTH = 100
-        const val HEIGHT = 100
+        const val HEIGHT = 190
         const val POINT_SIZE_BLOCK = 10
         const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
         val board = Array(HEIGHT / POINT_SIZE_BLOCK) { CharArray(WIDTH / POINT_SIZE_BLOCK) }

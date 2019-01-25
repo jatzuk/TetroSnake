@@ -56,7 +56,7 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
 
     private fun horizontalSearch(x: Int, y: Int, recLvl: Int = 0, bound: Int = -1/*range: IntRange = -1..-1*/): Pair<Int, Int>? {
         var pair: Pair<Int, Int>? = null
-        if ( /*x - 1 in range*/  x < 1 || x > WIDTH / POINT_SIZE_BLOCK - 1) {
+        if (x < 1 || x > WIDTH / POINT_SIZE_BLOCK - 1) {
             println("\t\tcan not add for line $y, returning null")
             return pair
         }
@@ -82,21 +82,19 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
     }
 
     private fun changeYAxis(x: Int, y: Int, recLvl: Int = 0): Pair<Int, Int>? {
+        if (y < 0 || y > HEIGHT / POINT_SIZE_BLOCK - 1) return null
         var pair: Pair<Int, Int>? = null
 
-        if (y < 0 || y > HEIGHT / POINT_SIZE_BLOCK - 1) return pair
-
-        var cy = y / 2
-        while (cy > 1 && pair == null) {
+        var cy = y
+        while (cy / 2 >= 1 && pair == null) {
             cy /= 2
             pair = horizontalSearch(x, cy, recLvl + 1)
         }
-//        cy = y
-//        while (cy > HEIGHT - 1 && pair == null) {
-//            cy *= 2
-//            pair = horizontalSearch(x, cy, recLvl + 1)
-//        }
-
+        cy = y
+        while (cy * 2 <= HEIGHT / POINT_SIZE_BLOCK - 1 && pair == null) {
+            cy *= 2
+            pair = horizontalSearch(x, cy, recLvl + 1)
+        }
         return pair
     }
 }
