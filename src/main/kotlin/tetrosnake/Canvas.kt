@@ -36,11 +36,6 @@ class Canvas : JPanel(), ActionListener {
         background = Color.BLACK
         isFocusable = true
         preferredSize = Dimension(WIDTH - POINT_SIZE_BLOCK, HEIGHT - POINT_SIZE_BLOCK)
-        initGame()
-    }
-
-    private fun initGame() {
-        initGameObjects()
         addKeyListener(object : KeyAdapter() {
             override fun keyPressed(e: KeyEvent?) {
                 with(snake) {
@@ -55,17 +50,20 @@ class Canvas : JPanel(), ActionListener {
                 }
             }
         })
-        timer.start()
+        initGame()
+    }
+
+    private fun initGame() {
+        initGameObjects()
         obstacleCreator.start()
         foodManager.start()
+        timer.start()
     }
 
     private fun initGameObjects() {
         for (y in 0 until board.size) {
             for (x in 0 until board[y].size) board[y][x] = EMPTY_TAG
         }
-
-        for (i in 0 until board.size) board[i][0] = OBSTACLE_TAG
 
         snake = Snake()
         foodManager = FoodManager()
@@ -126,7 +124,7 @@ class Canvas : JPanel(), ActionListener {
     private fun checkIfHorizontalLinesIsFilled() {
         for (y in 0 until board.size) {
             var fills = 0
-            for (x in 0 until board[y].size) if (board[y][x] == OBSTACLE_TAG) fills++
+            for (x in 0 until board[y].size) if (board[y][x] == OBSTACLE_TAG) fills++ else continue
             if (fills == board[y].size) clearRow(y)
         }
     }
@@ -151,7 +149,7 @@ class Canvas : JPanel(), ActionListener {
     private fun checkIfVerticalLinesIsFilled() {
         for (x in 0 until board.size) {
             var fills = 0
-            for (n in 0 until board.size) if (board[n][x] == OBSTACLE_TAG) fills++
+            for (n in 0 until board.size) if (board[n][x] == OBSTACLE_TAG) fills++ else continue
             if (fills == board.size) clearColumn(x)
         }
     }
@@ -166,16 +164,12 @@ class Canvas : JPanel(), ActionListener {
         foodManager.interrupt()
         snake.isAlive = false
         timer.stop()
-        showEngGameDialog()
         score = 0
+        showEngGameDialog()
     }
 
     private fun restart() {
         obstacleCreator = ObstacleCreator()
-        foodManager = FoodManager()
-        snake.isAlive = true
-        snake.isFalling = false
-        timer.delay = BASE_DELAY
         initGame()
     }
 
