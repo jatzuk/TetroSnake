@@ -36,9 +36,7 @@ class Snake : GameObject {
     var direction = /*randomDirection()*/ Direction.LEFT
 
     init {
-        for (i in 0 until 3) {
-            body.add(Point(15 + i, 10))
-        }
+        for (i in 0 until 3) body.add(Point(6 + i, 8))
         for ((sp, i) in (0 until body.size).withIndex()) {
             val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
             board[body[sp].y][body[sp].x] = char
@@ -68,7 +66,6 @@ class Snake : GameObject {
                 for (i in 0 until body.size) board[body[i].y++][body[i].x] = EMPTY_TAG
                 for (i in 0 until body.size) board[body[i].y][body[i].x] = SNAKE_BODY_TAG
             } else transformToObstacle()
-
         }
     }
 
@@ -101,12 +98,11 @@ class Snake : GameObject {
             if (point.y > maxY) maxY = point.y
         }
 
-            for (y in maxY downTo minY) {
-                for (x in minX .. maxX) {
-                    if (board[y + 1][x] == OBSTACLE_TAG && board[y][x] == SNAKE_BODY_TAG) return true
-                }
+        for (y in maxY downTo minY) {
+            for (x in minX..maxX) {
+                if (board[y][x] == SNAKE_BODY_TAG && board[y + 1][x] == OBSTACLE_TAG) return true
             }
-
+        }
         return false
     }
 }

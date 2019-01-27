@@ -23,6 +23,7 @@ object Frame : JFrame() {
         contentPane = Canvas()
         pack()
         isResizable = false
+        title = "TS"
         setLocationRelativeTo(null)
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
     }

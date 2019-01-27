@@ -11,7 +11,6 @@ import util.BoundsNotFoundException
 import util.randomX
 import util.randomY
 import java.util.*
-import kotlin.math.PI
 
 /**
  ** Created with passion and love
@@ -40,7 +39,6 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
                     for (i in 0 until size) board[y + i][x] = OBSTACLE_TAG
                 }
             } catch (e: BoundsNotFoundException) {
-                e.printStackTrace()
             }
         } else for (i in 0 until snake.body.size) board[snake.body[i].y][snake.body[i].x] = OBSTACLE_TAG
     }
@@ -62,8 +60,6 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
         var pair: Pair<Int, Int>? = null
         val xl = x - 1
         val xr = x + 1
-        println("trying to add object, x: $x, y: $y, reclvl: $recLvl")
-
         if (board[y][xl] == EMPTY_TAG && board[y][x] == EMPTY_TAG && board[y][xr] == EMPTY_TAG) pair = Pair(xl, y)
         else {
             if (pair == null && x - WALL_SIZE != bound && x - WALL_SIZE > 0) pair = horizontalSearch(x - WALL_SIZE, y, recLvl + 1, x)

@@ -6,7 +6,8 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import javax.swing.JFrame
+import java.util.*
+import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.Timer
 
@@ -27,8 +28,9 @@ import javax.swing.Timer
 class Canvas : JPanel(), ActionListener {
     private val timer = Timer(BASE_DELAY, this)
     private var obstacleCreator = ObstacleCreator()
-    private var isPause = false
-    private lateinit var food: Food
+    private lateinit var foodManager: FoodManager
+    private var isGamePaused = false
+    private var score = 0
 
     init {
         background = Color.BLACK
@@ -43,21 +45,19 @@ class Canvas : JPanel(), ActionListener {
             override fun keyPressed(e: KeyEvent?) {
                 with(snake) {
                     when (e?.keyCode) {
-                        KeyEvent.VK_UP -> if (!isFalling && direction != Direction.DOWN) direction = Direction.UP
+                        KeyEvent.VK_UP -> if (direction != Direction.DOWN) direction = Direction.UP
                         KeyEvent.VK_RIGHT -> if (!isFalling && direction != Direction.LEFT) direction = Direction.RIGHT
-                        KeyEvent.VK_DOWN -> if (!isFalling && direction != Direction.UP) direction = Direction.DOWN
+                        KeyEvent.VK_DOWN -> if (direction != Direction.UP) direction = Direction.DOWN
                         KeyEvent.VK_LEFT -> if (!isFalling && direction != Direction.RIGHT) direction = Direction.LEFT
                         KeyEvent.VK_SPACE -> if (!isFalling) isFalling = true
-                        KeyEvent.VK_R -> if (!isAlive) restart()
-                        KeyEvent.VK_P -> if (!isPause) pause() else unPause()
-//                    TODO("debug only")
-                        KeyEvent.VK_S -> printBoard()
+                        KeyEvent.VK_P -> if (!isGamePaused) pause()
                     }
                 }
             }
         })
         timer.start()
         obstacleCreator.start()
+        foodManager.start()
     }
 
     private fun initGameObjects() {
@@ -65,13 +65,17 @@ class Canvas : JPanel(), ActionListener {
             for (x in 0 until board[y].size) board[y][x] = EMPTY_TAG
         }
 
+        for (i in 0 until board.size) board[i][0] = OBSTACLE_TAG
+
         snake = Snake()
-        food = Food()
+        foodManager = FoodManager()
     }
 
     override fun actionPerformed(e: ActionEvent?) {
         checkCollisions()
         snake.move()
+        checkIfHorizontalLinesIsFilled()
+        checkIfVerticalLinesIsFilled()
         repaint()
     }
 
@@ -90,43 +94,85 @@ class Canvas : JPanel(), ActionListener {
                 g.fillRect(x * POINT_SIZE_BLOCK, y * POINT_SIZE_BLOCK, POINT_SIZE_SNAKE, POINT_SIZE_SNAKE)
             }
         }
-        (this.parent.parent.parent as JFrame).title = "Tetro-Snake! | " +
-                "score: ${snake.body.size - 3} $FOOD_TAG: x: ${food.x},y: ${food.y} " +
-                "$SNAKE_HEAD_TAG: - x: ${snake.body[0].x}, y: ${snake.body[0].y}, d = ${timer.delay}"
     }
 
     private fun checkCollisions() {
         if (snake.checkCollisionWith(snake)) gameEnd()
-        if (snake.checkCollisionWith(food)) {
-            val point = Point()
-            with(snake.body[snake.body.size - 1]) {
-                point.x = this.x
-                point.y = this.y
+        if (foodManager.food != null) {
+            if (snake.checkCollisionWith(foodManager.food!!)) {
+                val point = Point()
+                with(snake.body[snake.body.size - 1]) {
+                    point.x = this.x
+                    point.y = this.y
+                }
+                snake.body.add(point)
+                foodManager.foodEaten()
+                if (timer.delay > 0) timer.delay--
+                score++
             }
-            snake.body.add(point)
-            food = Food()
-            if (timer.delay > 0) timer.delay--
         }
 
         var checkX = snake.body[0].x
         var checkY = snake.body[0].y
         when (snake.direction) {
-           Direction.UP -> checkY = if (checkY > 0) --checkY else HEIGHT / POINT_SIZE_BLOCK - 1
-           Direction.RIGHT -> checkX = if (checkX < WIDTH / POINT_SIZE_BLOCK - 1) ++checkX else 0
-           Direction.DOWN -> checkY = if (checkY < HEIGHT / POINT_SIZE_BLOCK - 1) ++checkY else 0
-           Direction.LEFT -> checkX = if (checkX > 0) --checkX else WIDTH / POINT_SIZE_BLOCK - 1
+            Direction.UP -> checkY = if (checkY > 0) --checkY else HEIGHT / POINT_SIZE_BLOCK - 1
+            Direction.RIGHT -> checkX = if (checkX < WIDTH / POINT_SIZE_BLOCK - 1) ++checkX else 0
+            Direction.DOWN -> checkY = if (checkY < HEIGHT / POINT_SIZE_BLOCK - 1) ++checkY else 0
+            Direction.LEFT -> checkX = if (checkX > 0) --checkX else WIDTH / POINT_SIZE_BLOCK - 1
         }
         if (board[checkY][checkX] == OBSTACLE_TAG && !snake.isFalling) gameEnd()
     }
 
+    private fun checkIfHorizontalLinesIsFilled() {
+        for (y in 0 until board.size) {
+            var fills = 0
+            for (x in 0 until board[y].size) if (board[y][x] == OBSTACLE_TAG) fills++
+            if (fills == board[y].size) clearRow(y)
+        }
+    }
+
+    private fun clearRow(row: Int) {
+        for (i in 0 until row) board[row][i] = EMPTY_TAG
+        moveObstaclesDown()
+        score += 10
+    }
+
+    private fun moveObstaclesDown() {
+        for (y in board.size - 1 downTo 1) {
+            for (x in 0 until board[y].size) {
+                if (board[y - 1][x] == OBSTACLE_TAG) {
+                    board[y][x] = board[y - 1][x]
+                    board[y - 1][x] = EMPTY_TAG
+                }
+            }
+        }
+    }
+
+    private fun checkIfVerticalLinesIsFilled() {
+        for (x in 0 until board.size) {
+            var fills = 0
+            for (n in 0 until board.size) if (board[n][x] == OBSTACLE_TAG) fills++
+            if (fills == board.size) clearColumn(x)
+        }
+    }
+
+    private fun clearColumn(x: Int) {
+        for (i in 0 until board.size) board[i][x] = EMPTY_TAG
+        score += 10
+    }
+
     private fun gameEnd() {
         obstacleCreator.interrupt()
+        foodManager.interrupt()
         snake.isAlive = false
         timer.stop()
+        showEngGameDialog()
+        score = 0
     }
 
     private fun restart() {
         obstacleCreator = ObstacleCreator()
+        foodManager = FoodManager()
         snake.isAlive = true
         snake.isFalling = false
         timer.delay = BASE_DELAY
@@ -134,21 +180,38 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private fun pause() {
-        isPause = true
-        timer.stop()
+        isGamePaused = true
         obstacleCreator.interrupt()
+        foodManager.interrupt()
+        timer.stop()
+        showPauseDialog()
     }
 
-    private fun unPause() {
-        isPause = false
-        timer.restart()
+    private fun resume() {
         obstacleCreator = ObstacleCreator()
         obstacleCreator.start()
+        foodManager = FoodManager()
+        foodManager.start()
+        isGamePaused = false
+        timer.start()
+    }
+
+    private fun showPauseDialog() {
+        val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nReady to go?", "Game Paused", JOptionPane.YES_NO_OPTION)
+        if (choice == JOptionPane.YES_OPTION) resume()
+        else showEngGameDialog()
+    }
+
+    private fun showEngGameDialog() {
+        val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nWould you like to retry?", "Game over", JOptionPane.YES_NO_OPTION)
+        if (choice == JOptionPane.YES_OPTION) restart()
+        else System.exit(0)
     }
 
     companion object {
         private const val BASE_DELAY = 140
-        private const val OBSTACLE_CREATOR_DELAY_TIME = 1_000L
+        private const val BASE_OBSTACLE_CREATOR_DELAY_TIME = 100_000L
+        private const val BASE_FOOD_CREATOR_DELAY_TIME = 100_000L
         const val WALL_SIZE = 3
         const val FOOD_TAG = 'F'
         const val SNAKE_HEAD_TAG = 'H'
@@ -164,26 +227,64 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private inner class ObstacleCreator : Thread() {
+        var delayTime = BASE_OBSTACLE_CREATOR_DELAY_TIME
+            private set
+
         override fun run() {
             while (snake.isAlive && !isInterrupted) {
                 try {
-                    sleep(OBSTACLE_CREATOR_DELAY_TIME)
+                    sleep(delayTime)
                     Obstacle(WALL_SIZE)
+                    delayTime -= 10
                 } catch (e: InterruptedException) {
-                    e.printStackTrace()
-                    println(snake.isAlive)
                 }
             }
         }
     }
 
-    fun printBoard() {
-        for (y in 23 until board.size) {
-            for (x in 25 until board[y].size) {
-                print(board[y][x])
-            }
-            println()
+    private inner class FoodManager : Thread(), Observer {
+        var delayTime = BASE_FOOD_CREATOR_DELAY_TIME
+            private set
+        private lateinit var foodThread: Thread
+        var food: Food? = null
+
+        init {
+            if (food == null) food = Food()
         }
-        println("---------------------------------------\n")
+
+        override fun run() {
+            createFood()
+            while (!isInterrupted) {
+                try {
+                    if (snake.isAlive && food == null) {
+                        createFood()
+                        sleep(delayTime)
+                        delayTime -= 10
+                    }
+                } catch (e: InterruptedException) {
+                }
+            }
+        }
+
+        override fun update(o: Observable?, arg: Any?) {
+            destroyFood()
+        }
+
+        fun foodEaten() {
+            destroyFood()
+        }
+
+        private fun destroyFood() {
+            food!!.interruptFlag = true
+            food!!.deleteObserver(this)
+            board[food!!.y][food!!.x] = EMPTY_TAG
+            food = null
+        }
+
+        private fun createFood() {
+            if (food == null) food = Food()
+            food!!.addObserver(this)
+            foodThread = Thread(food).apply { start() }
+        }
     }
 }

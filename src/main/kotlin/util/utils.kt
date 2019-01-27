@@ -26,8 +26,8 @@ enum class Direction {
 
 class BoundsNotFoundException(string: String) : Exception(string)
 
-fun randomX(min: Int = 0, max: Int = WIDTH / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
+fun randomX(min: Int = 0, max: Int = WIDTH / POINT_SIZE_BLOCK) = (Math.random() * (max - min)).toInt() + min
 
-fun randomY(min: Int = 0, max: Int = HEIGHT / POINT_SIZE_BLOCK) = (Math.random() * Math.abs(max - min)).toInt() + min
+fun randomY(min: Int = 0, max: Int = HEIGHT / POINT_SIZE_BLOCK) = (Math.random() * (max - min)).toInt() + min
 
 fun randomDirection() = Direction.values()[(Math.random() * Direction.values().size).toInt()]
