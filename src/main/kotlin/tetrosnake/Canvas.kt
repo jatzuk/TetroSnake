@@ -41,10 +41,10 @@ class Canvas : JPanel(), ActionListener {
                 with(snake) {
                     when (e?.keyCode) {
                         KeyEvent.VK_UP -> if (direction != Direction.DOWN) direction = Direction.UP
-                        KeyEvent.VK_RIGHT -> if (!isFalling && direction != Direction.LEFT) direction = Direction.RIGHT
+                        KeyEvent.VK_RIGHT -> if (direction != Direction.LEFT) direction = Direction.RIGHT
                         KeyEvent.VK_DOWN -> if (direction != Direction.UP) direction = Direction.DOWN
-                        KeyEvent.VK_LEFT -> if (!isFalling && direction != Direction.RIGHT) direction = Direction.LEFT
-                        KeyEvent.VK_SPACE -> if (!isFalling) isFalling = true
+                        KeyEvent.VK_LEFT -> if (direction != Direction.RIGHT) direction = Direction.LEFT
+                        KeyEvent.VK_SPACE -> if (!isFalling) { isFalling = true; direction = Direction.DOWN }
                         KeyEvent.VK_P -> if (!isGamePaused) pause()
                     }
                 }
@@ -61,10 +61,7 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private fun initGameObjects() {
-        for (y in 0 until board.size) {
-            for (x in 0 until board[y].size) board[y][x] = EMPTY_TAG
-        }
-
+        for (y in 0 until board.size) for (x in 0 until board[y].size) board[y][x] = EMPTY_TAG
         snake = Snake()
         foodManager = FoodManager()
     }
@@ -124,7 +121,7 @@ class Canvas : JPanel(), ActionListener {
     private fun checkIfHorizontalLinesIsFilled() {
         for (y in 0 until board.size) {
             var fills = 0
-            for (x in 0 until board[y].size) if (board[y][x] == OBSTACLE_TAG) fills++ else continue
+            for (x in 0 until board[y].size) if (board[y][x] == OBSTACLE_TAG) fills++ else break
             if (fills == board[y].size) clearRow(y)
         }
     }
@@ -149,7 +146,7 @@ class Canvas : JPanel(), ActionListener {
     private fun checkIfVerticalLinesIsFilled() {
         for (x in 0 until board.size) {
             var fills = 0
-            for (n in 0 until board.size) if (board[n][x] == OBSTACLE_TAG) fills++ else continue
+            for (n in 0 until board.size) if (board[n][x] == OBSTACLE_TAG) fills++ else break
             if (fills == board.size) clearColumn(x)
         }
     }

@@ -59,12 +59,29 @@ class Snake : GameObject {
                 Direction.LEFT -> if (body[0].x > 0) body[0].x-- else body[0].x = WIDTH / POINT_SIZE_BLOCK - 1
             }
             board[body[0].y][body[0].x] = SNAKE_HEAD_TAG
-
         } else {
-            val max = body.maxBy { it.y }!!
-            if (max.y < HEIGHT / POINT_SIZE_BLOCK - 1 && !checkCollisionAtObstaclesOnFall()) {
-                for (i in 0 until body.size) board[body[i].y++][body[i].x] = EMPTY_TAG
+            var minX = body[0].x
+            var maxX = body[body.size - 1].x
+            var minY = body[0].y
+            var maxY = body[body.size - 1].y
+            for (point in body) {
+                if (point.x < minX) minX = point.x
+                if (point.x > maxX) maxX = point.x
+                if (point.y < minY) minY = point.y
+                if (point.y > maxY) maxY = point.y
+            }
+
+            if (maxY < HEIGHT / POINT_SIZE_BLOCK - 1 && !checkCollisionAtObstaclesOnFall(minX, minY, maxX, maxY)) {
+                for (i in 0 until body.size) {
+                    board[body[i].y++][body[i].x] = EMPTY_TAG
+//                    TODO("check")
+                    if (board[maxY + 1][minX - 1] != OBSTACLE_TAG && board[maxY + 1][maxX + 1] != OBSTACLE_TAG) {
+                        if (direction == Direction.LEFT) if (body[i].x-- < 1) body[i].x = WIDTH / POINT_SIZE_BLOCK - 1
+                        if (direction == Direction.RIGHT) if (body[i].x++ > WIDTH / POINT_SIZE_BLOCK - 1) body[i].x = 0
+                    }
+                }
                 for (i in 0 until body.size) board[body[i].y][body[i].x] = SNAKE_BODY_TAG
+                direction = Direction.DOWN
             } else transformToObstacle()
         }
     }
@@ -85,19 +102,7 @@ class Snake : GameObject {
 
     private fun checkCollisionAtPoint(x: Int, y: Int) = body[0].x == x && body[0].y == y
 
-    private fun checkCollisionAtObstaclesOnFall(): Boolean {
-        var minX = body[0].x
-        var maxX = body[body.size - 1].x
-        var minY = body[0].y
-        var maxY = body[body.size - 1].y
-
-        for (point in body) {
-            if (point.x < minX) minX = point.x
-            if (point.x > maxX) maxX = point.x
-            if (point.y < minY) minY = point.y
-            if (point.y > maxY) maxY = point.y
-        }
-
+    private fun checkCollisionAtObstaclesOnFall(minX: Int, minY: Int, maxX: Int, maxY: Int): Boolean {
         for (y in maxY downTo minY) {
             for (x in minX..maxX) {
                 if (board[y][x] == SNAKE_BODY_TAG && board[y + 1][x] == OBSTACLE_TAG) return true
