@@ -74,8 +74,9 @@ class Snake : GameObject {
             if (maxY < HEIGHT / POINT_SIZE_BLOCK - 1 && !checkCollisionAtObstaclesOnFall(minX, minY, maxX, maxY)) {
                 for (i in 0 until body.size) {
                     board[body[i].y++][body[i].x] = EMPTY_TAG
-//                    TODO("check")
-                    if (board[maxY + 1][minX - 1] != OBSTACLE_TAG && board[maxY + 1][maxX + 1] != OBSTACLE_TAG) {
+                    val xMin = if (minX - 1 < 0) 0 else minX - 1
+                    val xMax = if (maxX + 1 > WIDTH / POINT_SIZE_BLOCK - 1) WIDTH / POINT_SIZE_BLOCK - 1 else maxX + 1
+                    if (board[maxY + 1][xMin] != OBSTACLE_TAG && board[maxY + 1][xMax] != OBSTACLE_TAG) {
                         if (direction == Direction.LEFT) if (body[i].x-- < 1) body[i].x = WIDTH / POINT_SIZE_BLOCK - 1
                         if (direction == Direction.RIGHT) if (body[i].x++ > WIDTH / POINT_SIZE_BLOCK - 1) body[i].x = 0
                     }

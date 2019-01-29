@@ -1,5 +1,8 @@
 package tetrosnake
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import tetrosnake.Canvas.Companion.EMPTY_TAG
 import tetrosnake.Canvas.Companion.FOOD_TAG
 import tetrosnake.Canvas.Companion.board
@@ -23,7 +26,7 @@ import java.util.*
  **                                           ***___***
  */
 
-class Food : Observable(), Runnable, GameObject {
+class Food : Observable(), GameObject {
     private val foodLiveTime = 10_000L
     val x = randomX()
     val y = randomY()
@@ -34,12 +37,12 @@ class Food : Observable(), Runnable, GameObject {
         else placeFoodOnEmptySpace()
     }
 
-    override fun run() {
-        Thread.sleep(foodLiveTime)
+    suspend fun placeFood() {
+        delay(foodLiveTime)
         if (!interruptFlag) {
             setChanged()
             notifyObservers()
-        } else return
+        }
     }
 
     private fun placeFoodOnEmptySpace() {

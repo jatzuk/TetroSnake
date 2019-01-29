@@ -43,7 +43,7 @@ class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
         } else for (i in 0 until snake.body.size) board[snake.body[i].y][snake.body[i].x] = OBSTACLE_TAG
     }
 
-    fun arrangeObstacle(x: Int, y: Int, direction: Boolean): Pair<Int, Int>? {
+    private fun arrangeObstacle(x: Int, y: Int, direction: Boolean): Pair<Int, Int>? {
         var pair: Pair<Int, Int>?
         if (direction) {
             pair = horizontalSearch(x, y)

@@ -29,6 +29,6 @@ object Frame : JFrame() {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     EventQueue.invokeLater { Frame.isVisible = true }
 }

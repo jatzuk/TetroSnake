@@ -1,5 +1,8 @@
 package tetrosnake
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import util.Direction
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -27,8 +30,7 @@ import javax.swing.Timer
 
 class Canvas : JPanel(), ActionListener {
     private val timer = Timer(BASE_DELAY, this)
-    private var obstacleCreator = ObstacleCreator()
-    private lateinit var foodManager: FoodManager
+    private lateinit var gameObjectManager: GameObjectManager
     private var isGamePaused = false
     private var score = 0
 
@@ -54,16 +56,11 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private fun initGame() {
-        initGameObjects()
-        obstacleCreator.start()
-        foodManager.start()
-        timer.start()
-    }
-
-    private fun initGameObjects() {
         for (y in 0 until board.size) for (x in 0 until board[y].size) board[y][x] = EMPTY_TAG
+        gameObjectManager = GameObjectManager()
+        GlobalScope.launch { gameObjectManager.lifeCycle() }
         snake = Snake()
-        foodManager = FoodManager()
+        timer.start()
     }
 
     override fun actionPerformed(e: ActionEvent?) {
@@ -93,17 +90,16 @@ class Canvas : JPanel(), ActionListener {
 
     private fun checkCollisions() {
         if (snake.checkCollisionWith(snake)) gameEnd()
-        if (foodManager.food != null) {
-            if (snake.checkCollisionWith(foodManager.food!!)) {
+        if (gameObjectManager.food != null) {
+            if (snake.checkCollisionWith(gameObjectManager.food!!)) {
                 val point = Point()
                 with(snake.body[snake.body.size - 1]) {
                     point.x = this.x
                     point.y = this.y
                 }
                 snake.body.add(point)
-                foodManager.foodEaten()
+                gameObjectManager.foodEaten()
                 if (timer.delay > 0) timer.delay--
-                score++
             }
         }
 
@@ -157,32 +153,23 @@ class Canvas : JPanel(), ActionListener {
     }
 
     private fun gameEnd() {
-        obstacleCreator.interrupt()
-        foodManager.interrupt()
         snake.isAlive = false
         timer.stop()
-        score = 0
         showEngGameDialog()
+        score = 0
     }
 
     private fun restart() {
-        obstacleCreator = ObstacleCreator()
         initGame()
     }
 
     private fun pause() {
-        isGamePaused = true
-        obstacleCreator.interrupt()
-        foodManager.interrupt()
         timer.stop()
+        isGamePaused = true
         showPauseDialog()
     }
 
     private fun resume() {
-        obstacleCreator = ObstacleCreator()
-        obstacleCreator.start()
-        foodManager = FoodManager()
-        foodManager.start()
         isGamePaused = false
         timer.start()
     }
@@ -201,8 +188,9 @@ class Canvas : JPanel(), ActionListener {
 
     companion object {
         private const val BASE_DELAY = 140
-        private const val BASE_OBSTACLE_CREATOR_DELAY_TIME = 100_000L
-        private const val BASE_FOOD_CREATOR_DELAY_TIME = 100_000L
+        private const val BASE_OBSTACLE_CREATOR_DELAY_TIME = 3_000L
+        private const val BASE_FOOD_CREATOR_DELAY_TIME = 2_000L
+        private const val BASE_DELAY_TIME_DECREASE = 10L
         const val WALL_SIZE = 3
         const val FOOD_TAG = 'F'
         const val SNAKE_HEAD_TAG = 'H'
@@ -217,42 +205,26 @@ class Canvas : JPanel(), ActionListener {
         lateinit var snake: Snake
     }
 
-    private inner class ObstacleCreator : Thread() {
-        var delayTime = BASE_OBSTACLE_CREATOR_DELAY_TIME
-            private set
-
-        override fun run() {
-            while (snake.isAlive && !isInterrupted) {
-                try {
-                    sleep(delayTime)
-                    Obstacle(WALL_SIZE)
-                    delayTime -= 10
-                } catch (e: InterruptedException) {
-                }
-            }
-        }
-    }
-
-    private inner class FoodManager : Thread(), Observer {
-        var delayTime = BASE_FOOD_CREATOR_DELAY_TIME
-            private set
-        private lateinit var foodThread: Thread
+    private inner class GameObjectManager : Observer {
+        private var obstacleDelayTime = BASE_OBSTACLE_CREATOR_DELAY_TIME
+        private var foodDelayTime = BASE_FOOD_CREATOR_DELAY_TIME
         var food: Food? = null
 
         init {
             if (food == null) food = Food()
         }
 
-        override fun run() {
-            createFood()
-            while (!isInterrupted) {
-                try {
-                    if (snake.isAlive && food == null) {
-                        createFood()
-                        sleep(delayTime)
-                        delayTime -= 10
-                    }
-                } catch (e: InterruptedException) {
+        suspend fun lifeCycle() {
+            while (true) {
+                if (!isGamePaused && snake.isAlive && food == null) {
+                    createFood()
+                    delay(foodDelayTime)
+                    foodDelayTime -= BASE_DELAY_TIME_DECREASE
+                }
+                if (!isGamePaused) {
+                    delay(obstacleDelayTime)
+                    Obstacle(WALL_SIZE)
+                    obstacleDelayTime -= BASE_DELAY_TIME_DECREASE
                 }
             }
         }
@@ -262,6 +234,7 @@ class Canvas : JPanel(), ActionListener {
         }
 
         fun foodEaten() {
+            score++
             destroyFood()
         }
 
@@ -275,7 +248,7 @@ class Canvas : JPanel(), ActionListener {
         private fun createFood() {
             if (food == null) food = Food()
             food!!.addObserver(this)
-            foodThread = Thread(food).apply { start() }
+            GlobalScope.launch { food!!.placeFood() }
         }
     }
 }
