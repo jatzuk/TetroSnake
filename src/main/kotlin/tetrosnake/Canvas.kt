@@ -1,38 +1,36 @@
 package tetrosnake
 
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import util.Direction
+import util.GameObjectManager
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.util.*
 import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.Timer
 
-/**
- ** Created with passion and love
- **    for project TetroSnake
- **        by Jatzuk on 17-Jan-19
- **                                            *_____*
- **                                           *_*****_*
- **                                          *_(O)_(O)_*
- **                                         **____V____**
- **                                         **_________**
- **                                         **_________**
- **                                          *_________*
- **                                           ***___***
+/*
+ * Created with passion and love
+ *    for project TetroSnake
+ *        by Jatzuk on 17-Jan-19
+ *                                            *_____*
+ *                                           *_*****_*
+ *                                          *_(O)_(O)_*
+ *                                         **____V____**
+ *                                         **_________**
+ *                                         **_________**
+ *                                          *_________*
+ *                                           ***___***
  */
 
 class Canvas : JPanel(), ActionListener {
     private val timer = Timer(BASE_DELAY, this)
-    private lateinit var gameObjectManager: GameObjectManager
-    private var isGamePaused = false
-    private var score = 0
+    private var gameObjectManager = GameObjectManager
 
     init {
         background = Color.BLACK
@@ -57,9 +55,8 @@ class Canvas : JPanel(), ActionListener {
 
     private fun initGame() {
         for (y in 0 until board.size) for (x in 0 until board[y].size) board[y][x] = EMPTY_TAG
-        gameObjectManager = GameObjectManager()
-        GlobalScope.launch { gameObjectManager.lifeCycle() }
         snake = Snake()
+        gameFlow = GlobalScope.launch { gameObjectManager.lifeCycle() }
         timer.start()
     }
 
@@ -90,17 +87,16 @@ class Canvas : JPanel(), ActionListener {
 
     private fun checkCollisions() {
         if (snake.checkCollisionWith(snake)) gameEnd()
-        if (gameObjectManager.food != null) {
-            if (snake.checkCollisionWith(gameObjectManager.food!!)) {
-                val point = Point()
-                with(snake.body[snake.body.size - 1]) {
-                    point.x = this.x
-                    point.y = this.y
-                }
-                snake.body.add(point)
-                gameObjectManager.foodEaten()
-                if (timer.delay > 0) timer.delay--
+        if (snake.checkCollisionWith(gameObjectManager.food)) {
+            val point = Point()
+            with(snake.body[snake.body.size - 1]) {
+                point.x = this.x
+                point.y = this.y
             }
+            snake.body.add(point)
+            score++
+            gameObjectManager.foodEaten()
+            if (timer.delay > 0) timer.delay--
         }
 
         var checkX = snake.body[0].x
@@ -154,8 +150,9 @@ class Canvas : JPanel(), ActionListener {
 
     private fun gameEnd() {
         snake.isAlive = false
+        gameFlow.cancel()
         timer.stop()
-        showEngGameDialog()
+        showEndGameDialog()
         score = 0
     }
 
@@ -177,10 +174,10 @@ class Canvas : JPanel(), ActionListener {
     private fun showPauseDialog() {
         val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nReady to go?", "Game Paused", JOptionPane.YES_NO_OPTION)
         if (choice == JOptionPane.YES_OPTION) resume()
-        else showEngGameDialog()
+        else showEndGameDialog()
     }
 
-    private fun showEngGameDialog() {
+    private fun showEndGameDialog() {
         val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nWould you like to retry?", "Game over", JOptionPane.YES_NO_OPTION)
         if (choice == JOptionPane.YES_OPTION) restart()
         else System.exit(0)
@@ -188,67 +185,20 @@ class Canvas : JPanel(), ActionListener {
 
     companion object {
         private const val BASE_DELAY = 140
-        private const val BASE_OBSTACLE_CREATOR_DELAY_TIME = 3_000L
-        private const val BASE_FOOD_CREATOR_DELAY_TIME = 2_000L
-        private const val BASE_DELAY_TIME_DECREASE = 10L
+        private var score = 0
+        lateinit var snake: Snake
+        lateinit var gameFlow: Job
+        var isGamePaused = false
         const val WALL_SIZE = 3
+        const val WIDTH = 200
+        const val HEIGHT = 200
+        const val POINT_SIZE_BLOCK = 10
+        const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
         const val FOOD_TAG = 'F'
         const val SNAKE_HEAD_TAG = 'H'
         const val SNAKE_BODY_TAG = 'S'
         const val OBSTACLE_TAG = 'O'
         const val EMPTY_TAG = 'E'
-        const val WIDTH = 200
-        const val HEIGHT = 200
-        const val POINT_SIZE_BLOCK = 10
-        const val POINT_SIZE_SNAKE = POINT_SIZE_BLOCK - 1
         val board = Array(HEIGHT / POINT_SIZE_BLOCK) { CharArray(WIDTH / POINT_SIZE_BLOCK) }
-        lateinit var snake: Snake
-    }
-
-    private inner class GameObjectManager : Observer {
-        private var obstacleDelayTime = BASE_OBSTACLE_CREATOR_DELAY_TIME
-        private var foodDelayTime = BASE_FOOD_CREATOR_DELAY_TIME
-        var food: Food? = null
-
-        init {
-            if (food == null) food = Food()
-        }
-
-        suspend fun lifeCycle() {
-            while (true) {
-                if (!isGamePaused && snake.isAlive && food == null) {
-                    createFood()
-                    delay(foodDelayTime)
-                    foodDelayTime -= BASE_DELAY_TIME_DECREASE
-                }
-                if (!isGamePaused) {
-                    delay(obstacleDelayTime)
-                    Obstacle(WALL_SIZE)
-                    obstacleDelayTime -= BASE_DELAY_TIME_DECREASE
-                }
-            }
-        }
-
-        override fun update(o: Observable?, arg: Any?) {
-            destroyFood()
-        }
-
-        fun foodEaten() {
-            score++
-            destroyFood()
-        }
-
-        private fun destroyFood() {
-            food!!.interruptFlag = true
-            food!!.deleteObserver(this)
-            board[food!!.y][food!!.x] = EMPTY_TAG
-            food = null
-        }
-
-        private fun createFood() {
-            if (food == null) food = Food()
-            food!!.addObserver(this)
-            GlobalScope.launch { food!!.placeFood() }
-        }
     }
 }

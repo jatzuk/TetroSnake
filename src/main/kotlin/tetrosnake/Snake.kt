@@ -14,18 +14,18 @@ import util.GameObject
 import java.awt.Point
 import java.util.*
 
-/**
- ** Created with passion and love
- **    for project Snake
- **        by Jatzuk on 21.01.2019
- **                                            *_____*
- **                                           *_*****_*
- **                                          *_(O)_(O)_*
- **                                         **____V____**
- **                                         **_________**
- **                                         **_________**
- **                                          *_________*
- **                                           ***___***
+/*
+ * Created with passion and love
+ *    for project Snake
+ *        by Jatzuk on 21.01.2019
+ *                                            *_____*
+ *                                           *_*****_*
+ *                                          *_(O)_(O)_*
+ *                                         **____V____**
+ *                                         **_________**
+ *                                         **_________**
+ *                                          *_________*
+ *                                           ***___***
  */
 
 class Snake : GameObject {

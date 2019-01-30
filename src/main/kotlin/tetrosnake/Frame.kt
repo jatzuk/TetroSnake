@@ -4,18 +4,18 @@ import java.awt.EventQueue
 import javax.swing.JFrame
 import javax.swing.WindowConstants
 
-/**
- ** Created with passion and love
- **    for project TetroSnake
- **        by Jatzuk on 17-Jan-19
- **                                            *_____*
- **                                           *_*****_*
- **                                          *_(O)_(O)_*
- **                                         **____V____**
- **                                         **_________**
- **                                         **_________**
- **                                          *_________*
- **                                           ***___***
+/*
+ * Created with passion and love
+ *    for project TetroSnake
+ *        by Jatzuk on 17-Jan-19
+ *                                            *_____*
+ *                                           *_*****_*
+ *                                          *_(O)_(O)_*
+ *                                         **____V____**
+ *                                         **_________**
+ *                                         **_________**
+ *                                          *_________*
+ *                                           ***___***
  */
 
 object Frame : JFrame() {

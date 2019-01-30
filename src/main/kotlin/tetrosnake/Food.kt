@@ -1,8 +1,7 @@
 package tetrosnake
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.NonCancellable.isActive
 import tetrosnake.Canvas.Companion.EMPTY_TAG
 import tetrosnake.Canvas.Companion.FOOD_TAG
 import tetrosnake.Canvas.Companion.board
@@ -12,34 +11,31 @@ import util.randomY
 import java.awt.Point
 import java.util.*
 
-/**
- ** Created with passion and love
- **    for project Snake
- **        by Jatzuk on 21.01.2019
- **                                            *_____*
- **                                           *_*****_*
- **                                          *_(O)_(O)_*
- **                                         **____V____**
- **                                         **_________**
- **                                         **_________**
- **                                          *_________*
- **                                           ***___***
+/*
+ * Created with passion and love
+ *    for project Snake
+ *        by Jatzuk on 21.01.2019
+ *                                            *_____*
+ *                                           *_*****_*
+ *                                          *_(O)_(O)_*
+ *                                         **____V____**
+ *                                         **_________**
+ *                                         **_________**
+ *                                          *_________*
+ *                                           ***___***
  */
 
 class Food : Observable(), GameObject {
-    private val foodLiveTime = 10_000L
+    private val foodLiveTime = 2_000L
     val x = randomX()
     val y = randomY()
-    var interruptFlag = false
 
     init {
         if (board[y][x] == EMPTY_TAG) board[y][x] = FOOD_TAG
         else placeFoodOnEmptySpace()
-    }
 
-    suspend fun placeFood() {
-        delay(foodLiveTime)
-        if (!interruptFlag) {
+        GlobalScope.launch {
+            delay(foodLiveTime)
             setChanged()
             notifyObservers()
         }

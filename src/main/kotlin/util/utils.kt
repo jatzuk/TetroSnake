@@ -4,18 +4,18 @@ import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.HEIGHT
 import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
 
-/**
- ** Created with passion and love
- **    for project TetroSnake
- **        by Jatzuk on 16.01.2019
- **                                            *_____*
- **                                           *_*****_*
- **                                          *_(O)_(O)_*
- **                                         **____V____**
- **                                         **_________**
- **                                         **_________**
- **                                          *_________*
- **                                           ***___***
+/*
+ * Created with passion and love
+ *    for project TetroSnake
+ *        by Jatzuk on 16.01.2019
+ *                                            *_____*
+ *                                           *_*****_*
+ *                                          *_(O)_(O)_*
+ *                                         **____V____**
+ *                                         **_________**
+ *                                         **_________**
+ *                                          *_________*
+ *                                           ***___***
  */
 
 interface GameObject

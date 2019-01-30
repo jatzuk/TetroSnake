@@ -12,18 +12,18 @@ import util.randomX
 import util.randomY
 import java.util.*
 
-/**
- ** Created with passion and love
- **    for project Snake
- **        by Jatzuk on 21.01.2019
- **                                            *_____*
- **                                           *_*****_*
- **                                          *_(O)_(O)_*
- **                                         **____V____**
- **                                         **_________**
- **                                         **_________**
- **                                          *_________*
- **                                           ***___***
+/*
+ * Created with passion and love
+ *    for project Snake
+ *        by Jatzuk on 21.01.2019
+ *                                            *_____*
+ *                                           *_*****_*
+ *                                          *_(O)_(O)_*
+ *                                         **____V____**
+ *                                         **_________**
+ *                                         **_________**
+ *                                          *_________*
+ *                                           ***___***
  */
 
 class Obstacle(size: Int = Canvas.WALL_SIZE, snake: Snake? = null) {
