@@ -1,7 +1,8 @@
 package tetrosnake
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.NonCancellable.isActive
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import tetrosnake.Canvas.Companion.EMPTY_TAG
 import tetrosnake.Canvas.Companion.FOOD_TAG
 import tetrosnake.Canvas.Companion.board
@@ -26,7 +27,7 @@ import java.util.*
  */
 
 class Food : Observable(), GameObject {
-    private val foodLiveTime = 2_000L
+    private val foodLiveTime = 8_000L
     val x = randomX()
     val y = randomY()
 
@@ -42,7 +43,7 @@ class Food : Observable(), GameObject {
     }
 
     private fun placeFoodOnEmptySpace() {
-        val emptyPoints = ArrayList<Point>()
+        val emptyPoints = arrayListOf<Point>()
         for (y in 0 until board.size) {
             for (x in 0 until board[y].size) if (board[y][x] == EMPTY_TAG) emptyPoints.add(Point(x, y))
         }

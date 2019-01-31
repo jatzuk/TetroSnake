@@ -1,7 +1,11 @@
 package util
 
 import kotlinx.coroutines.delay
-import tetrosnake.Canvas
+import tetrosnake.Canvas.Companion.EMPTY_TAG
+import tetrosnake.Canvas.Companion.WALL_SIZE
+import tetrosnake.Canvas.Companion.board
+import tetrosnake.Canvas.Companion.gameFlow
+import tetrosnake.Canvas.Companion.isGamePaused
 import tetrosnake.Food
 import tetrosnake.Obstacle
 import java.util.*
@@ -21,22 +25,22 @@ import java.util.*
  */
 
 object GameObjectManager : Observer {
-    private const val BASE_OBSTACLE_CREATOR_DELAY_TIME = 3_000L
-    private const val BASE_FOOD_CREATOR_DELAY_TIME = 2_000L
+    private const val BASE_OBSTACLE_CREATOR_DELAY_TIME = 16_000L
+    private const val BASE_FOOD_CREATOR_DELAY_TIME = 8_000L
     private const val BASE_DELAY_TIME_DECREASE = 10L
     private var obstacleDelayTime = BASE_OBSTACLE_CREATOR_DELAY_TIME
     private var foodDelayTime = BASE_FOOD_CREATOR_DELAY_TIME
     lateinit var food: Food
 
     suspend fun lifeCycle() {
-        while (Canvas.gameFlow.isActive) {
-            if (!Canvas.isGamePaused) {
+        while (gameFlow.isActive) {
+            if (!isGamePaused) {
                 createFood()
                 delay(foodDelayTime)
                 foodDelayTime -= BASE_DELAY_TIME_DECREASE
             }
-            if (!Canvas.isGamePaused) {
-                Obstacle(Canvas.WALL_SIZE)
+            if (!isGamePaused) {
+                Obstacle(WALL_SIZE)
                 delay(obstacleDelayTime)
                 obstacleDelayTime -= BASE_DELAY_TIME_DECREASE
             }
@@ -53,11 +57,11 @@ object GameObjectManager : Observer {
 
     private fun destroyFood() {
         food.deleteObserver(this)
-        Canvas.board[food.y][food.x] = Canvas.EMPTY_TAG
+        board[food.y][food.x] = EMPTY_TAG
+        createFood()
     }
 
     private fun createFood() {
-        food = Food()
-        food.addObserver(this)
+        food = Food().apply { addObserver(this@GameObjectManager) }
     }
 }

@@ -10,8 +10,12 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.io.BufferedInputStream
+import java.io.FileInputStream
+import java.io.IOException
 import javax.swing.JOptionPane
 import javax.swing.JPanel
+import javax.swing.JTextArea
 import javax.swing.Timer
 
 /*
@@ -46,6 +50,7 @@ class Canvas : JPanel(), ActionListener {
                         KeyEvent.VK_LEFT -> if (direction != Direction.RIGHT) direction = Direction.LEFT
                         KeyEvent.VK_SPACE -> if (!isFalling) { isFalling = true; direction = Direction.DOWN }
                         KeyEvent.VK_P -> if (!isGamePaused) pause()
+                        KeyEvent.VK_H -> if (!isGamePaused) aboutDialog()
                     }
                 }
             }
@@ -62,6 +67,7 @@ class Canvas : JPanel(), ActionListener {
 
     override fun actionPerformed(e: ActionEvent?) {
         checkCollisions()
+        if (snake.overfed()) snake.isFalling = true
         snake.move()
         checkIfHorizontalLinesIsFilled()
         checkIfVerticalLinesIsFilled()
@@ -76,6 +82,7 @@ class Canvas : JPanel(), ActionListener {
                     OBSTACLE_TAG -> Color.RED
                     SNAKE_HEAD_TAG -> Color.YELLOW
                     SNAKE_BODY_TAG -> Color.WHITE
+                    SNAKE_OVERFED_TAG -> Color.ORANGE
                     FOOD_TAG -> Color.GREEN
                     EMPTY_TAG -> Color.BLACK
                     else -> Color.BLACK
@@ -152,7 +159,7 @@ class Canvas : JPanel(), ActionListener {
         snake.isAlive = false
         gameFlow.cancel()
         timer.stop()
-        showEndGameDialog()
+        gameEndDialog()
         score = 0
     }
 
@@ -160,10 +167,10 @@ class Canvas : JPanel(), ActionListener {
         initGame()
     }
 
-    private fun pause() {
+    private fun pause(flag: Boolean = true) {
         timer.stop()
         isGamePaused = true
-        showPauseDialog()
+        if (flag) pauseDialog()
     }
 
     private fun resume() {
@@ -171,24 +178,58 @@ class Canvas : JPanel(), ActionListener {
         timer.start()
     }
 
-    private fun showPauseDialog() {
-        val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nReady to go?", "Game Paused", JOptionPane.YES_NO_OPTION)
-        if (choice == JOptionPane.YES_OPTION) resume()
-        else showEndGameDialog()
+    private fun aboutDialog() {
+        pause(false)
+        val customFont = try {
+            BufferedInputStream(FileInputStream("src/main/resources/BalooThambi-Regular.ttf")).use {
+                Font.createFont(Font.TRUETYPE_FONT, it).deriveFont(14F)
+            }
+        } catch (e: IOException) {
+            font
+        }
+        val msg = """Welcome to the TetroSnake game!
+                        |Controls:
+                        |   direction - arrows
+                        |   space - enter tetris mode
+                        |   P - pause
+                        |   H - about dialog
+                    |Snake length more then 10? - falling down. Stop feeding!
+                    |When snake length is 9 it will turn orange showing it's
+                    |time to dump a load
+                    |
+                    |Created with passion and love by Jatzuk on 31-Jan-19
+                    |                        *_____*
+                    |                       *_*****_*
+                    |                    *_(O)_(O)_*
+                    |                 **____V____**
+                    |                 **_________**
+                    |                 **_________**
+                    |                  *_________*
+                    |                       ***___***
+                    |""".trimMargin()
+        val ta = JTextArea(msg).apply {
+            isEditable = false
+            font = customFont
+            background = Color(238, 238, 238)
+        }
+        JOptionPane.showMessageDialog(this, ta, "About", JOptionPane.INFORMATION_MESSAGE)
+        resume()
     }
 
-    private fun showEndGameDialog() {
-        val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nWould you like to retry?", "Game over", JOptionPane.YES_NO_OPTION)
+    private fun pauseDialog() {
+        val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nReady to go?", "Game Paused", JOptionPane.YES_NO_OPTION)
+        if (choice == JOptionPane.YES_OPTION) resume()
+        else gameEndDialog()
+    }
+
+    private fun gameEndDialog() {
+        val choice = JOptionPane.showConfirmDialog(this, "Score: $score\nWould you like to retry?\nPress H while in game to show Info dialog", "Game over", JOptionPane.YES_NO_OPTION)
         if (choice == JOptionPane.YES_OPTION) restart()
         else System.exit(0)
     }
 
     companion object {
         private const val BASE_DELAY = 140
-        private var score = 0
-        lateinit var snake: Snake
-        lateinit var gameFlow: Job
-        var isGamePaused = false
         const val WALL_SIZE = 3
         const val WIDTH = 200
         const val HEIGHT = 200
@@ -197,8 +238,13 @@ class Canvas : JPanel(), ActionListener {
         const val FOOD_TAG = 'F'
         const val SNAKE_HEAD_TAG = 'H'
         const val SNAKE_BODY_TAG = 'S'
+        const val SNAKE_OVERFED_TAG = 'D'
         const val OBSTACLE_TAG = 'O'
         const val EMPTY_TAG = 'E'
+        private var score = 0
         val board = Array(HEIGHT / POINT_SIZE_BLOCK) { CharArray(WIDTH / POINT_SIZE_BLOCK) }
+        var isGamePaused = false
+        lateinit var snake: Snake
+        lateinit var gameFlow: Job
     }
 }

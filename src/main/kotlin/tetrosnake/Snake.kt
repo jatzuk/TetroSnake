@@ -6,9 +6,11 @@ import tetrosnake.Canvas.Companion.OBSTACLE_TAG
 import tetrosnake.Canvas.Companion.POINT_SIZE_BLOCK
 import tetrosnake.Canvas.Companion.SNAKE_BODY_TAG
 import tetrosnake.Canvas.Companion.SNAKE_HEAD_TAG
+import tetrosnake.Canvas.Companion.SNAKE_OVERFED_TAG
 import tetrosnake.Canvas.Companion.WIDTH
 import tetrosnake.Canvas.Companion.board
 import tetrosnake.Canvas.Companion.snake
+import util.Arrangeable
 import util.Direction
 import util.GameObject
 import java.awt.Point
@@ -28,19 +30,21 @@ import java.util.*
  *                                           ***___***
  */
 
-class Snake : GameObject {
+class Snake : GameObject, Arrangeable {
+    private val snakeLengthLimit = 10
     val body = ArrayList<Point>()
     var isFalling = false
     var isAlive = true
-    //        TODO("self killing in right case")
-    var direction = /*randomDirection()*/ Direction.LEFT
+    lateinit var direction: Direction
 
     init {
-        for (i in 0 until 3) body.add(Point(6 + i, 8))
-        for ((sp, i) in (0 until body.size).withIndex()) {
-            val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
-            board[body[sp].y][body[sp].x] = char
-        }
+        arrange()?.let {
+            direction = if (it.third) Direction.LEFT else Direction.UP
+            repeat(3) { i ->
+                if (it.third) body.add(Point(it.first + i, it.second))
+                else body.add(Point(it.first, it.second + i))
+            }
+        } ?: fillStraightforward()
     }
 
     fun move() {
@@ -49,7 +53,7 @@ class Snake : GameObject {
             for (i in body.size - 1 downTo 1) {
                 body[i].x = body[i - 1].x
                 body[i].y = body[i - 1].y
-                board[body[i].y][body[i].x] = SNAKE_BODY_TAG
+                board[body[i].y][body[i].x] = if (body.size > snakeLengthLimit - 1) SNAKE_OVERFED_TAG else SNAKE_BODY_TAG
             }
 
             when (direction) {
@@ -87,6 +91,8 @@ class Snake : GameObject {
         }
     }
 
+    fun overfed() = body.size > snakeLengthLimit
+
     fun checkCollisionWith(gameObject: GameObject): Boolean {
         when (gameObject) {
             is Snake -> for (i in 1 until body.size) if (checkCollisionAtPoint(gameObject.body[i].x, gameObject.body[i].y)) return true
@@ -110,5 +116,14 @@ class Snake : GameObject {
             }
         }
         return false
+    }
+
+    private fun fillStraightforward() {
+        direction = Direction.LEFT
+        repeat(3) { body.add(Point(6 + it, 8)) }
+        for ((sp, i) in (0 until body.size).withIndex()) {
+            val char = if (i == 0) SNAKE_HEAD_TAG else SNAKE_BODY_TAG
+            board[body[sp].y][body[sp].x] = char
+        }
     }
 }
